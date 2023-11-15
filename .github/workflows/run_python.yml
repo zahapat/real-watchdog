@@ -38,10 +38,11 @@ jobs:
               uses: actions/setup-python@v4
               id: setuppython
               with:
-                    python_version: ${{ matrix.python-version }}
+                python_version: ${{ matrix.python-version }}
 
             - uses: actions/cache@v3
               id: cache
+              with:
                 path: ${{ env.pythonLocation }}
                 key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles.(requirements.txt) }}-test1
 

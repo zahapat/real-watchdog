@@ -1,0 +1,54 @@
+# Workflow name
+name: Run Python Script via Windows Powershell
+
+# Run this workflow at scheduled times
+on:
+    schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '0,30 7-23 * * *'
+
+# Create Environment Variables
+env:
+    recepients_email: ${{ secrets.RECEPIENTS_EMAIL }}
+    search_cities: ${{ secrets.SEARCH_CITIES }}
+    zone_info: ${{ secrets.ZONE_INFO }}
+    smtp_server: ${{ secrets.SMTP_SERVER }}
+    smtp_port: ${{ secrets.SMTP_PORT }}
+    smtp_username: ${{ secrets.SMTP_USERNAME }}
+    mail_app_password: ${{ secrets.MAIL_APP_PASSWORD }}
+    website_url_root: ${{ secrets.WEBSITE_URL_ROOT }}
+    search_requirements: ${{ secrets.SEARCH_REQUIREMENTS }}
+
+# Create Jobs
+jobs:
+    run_python_via_powershell:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            max-parallel: 1
+            matrix:
+                os: [windows-latest]
+                python-version: ['3.11']
+            fail-fast: false
+
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v3
+
+            - name: Setup Python Version ${{ matrix.python-version }}
+              uses: actions/setup-python@v4
+              id: setuppython
+              with:
+                    python_version: ${{ matrix.python-version }}
+
+            - uses: actions/cache@v3
+              id: cache
+                path: ${{ env.pythonLocation }}
+                key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles.(requirements.txt) }}-test1
+
+            - name: Install Dependencies
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: pip install -r requirements.txt
+
+            - name: Run Python Script via Powershell
+              shell: pwsh
+              run: python watchdog.py

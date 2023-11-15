@@ -5,7 +5,7 @@ name: Run Python Script via Windows Powershell
 on:
     schedule:
     # * is a special character in YAML so you have to quote this string
-    - cron:  '0,30 7-23 * * *'
+    - cron:  '0 8-23 * * *'
 
 # Create Environment Variables
 env:

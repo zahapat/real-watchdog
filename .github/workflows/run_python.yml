@@ -10,7 +10,7 @@ on:
 # Create Environment Variables
 env:
     recepients_email: ${{ secrets.RECEPIENTS_EMAIL }}
-    search_cities: ${{ secrets.SEARCH_CITIES }}
+    search_cities_list: ${{ secrets.SEARCH_CITIES_LIST }}
     zone_info: ${{ secrets.ZONE_INFO }}
     smtp_server: ${{ secrets.SMTP_SERVER }}
     smtp_port: ${{ secrets.SMTP_PORT }}
@@ -38,7 +38,7 @@ jobs:
               uses: actions/setup-python@v4
               id: setuppython
               with:
-                python_version: ${{ matrix.python-version }}
+                python-version: ${{ matrix.python-version }}
 
             - uses: actions/cache@v3
               id: cache

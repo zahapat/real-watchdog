@@ -111,9 +111,6 @@ def send_email(purpose, to_recepients_list):
     new_target_properties_details = [[] for i in search_dispositions_list]
 
     print(f"PY: Email has been sent successfully.")
-    print(f"PY: Email Subject: {subject}")
-    print(f"PY: Email Body:")
-    print(f"{body}")
 
     return 0
 
@@ -295,7 +292,7 @@ def search_in_page(url):
         return 0
 
     except ValueError as e:
-        print(f"Error while processing {url}: {e}")
+        print(f"Error while processing {url}: {e}").encode('utf-8-sig')
 
 
 # Sort the databases from the newest to the oldest added item
@@ -331,6 +328,9 @@ def write_content_to_output_files(file_prefix):
 
 
 def main():
+
+    max_scan_pages = 1400 # Temporary solution
+
     # ----------------------------------------------------------------------------
     #                             PROPERTIES FOR SALE
     # ----------------------------------------------------------------------------
@@ -343,7 +343,7 @@ def main():
     search_in_page(f"{website_url_root}/prodam/byt/{search_requirements}")
     advertisements_done = 0
     page = 1
-    while advertisements_done == 0:
+    while (advertisements_done == 0) and (page*20 <= max_scan_pages):
         advertisements_done = search_in_page(f"{website_url_root}/prodam/byt/{page*20}/{search_requirements}")
         page = page + 1
 
@@ -364,7 +364,7 @@ def main():
     search_in_page(f"{website_url_root}/pronajmu/byt/{search_requirements}")
     advertisements_done = 0
     page = 1
-    while advertisements_done == 0:
+    while (advertisements_done == 0) and (page*20 <= max_scan_pages):
         advertisements_done = search_in_page(f"{website_url_root}/pronajmu/byt/{page*20}/{search_requirements}")
         page = page + 1
 

@@ -9,6 +9,11 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from sys import stdin, stdout
+
+stdin.reconfigure(encoding='utf-8-sig')
+stdout.reconfigure(encoding='utf-8-sig')
+
 # -------------------------------------------------
 #                     SECRETS
 # -------------------------------------------------
@@ -292,7 +297,7 @@ def search_in_page(url):
         return 0
 
     except ValueError as e:
-        print(f"Error while processing {url}: {e}").encode('utf-8-sig')
+        print(f"Error while processing {url}: {e}")
 
 
 # Sort the databases from the newest to the oldest added item

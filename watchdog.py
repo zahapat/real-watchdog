@@ -182,24 +182,28 @@ def get_details(url):
             soup = BeautifulSoup(page_content, "html.parser")
             header = str(soup.find_all("h1", {"class": "nadpisdetail"})).replace("<h1 class=\"nadpisdetail\">","").replace("</h1>","")
             details = str(soup.find_all("div", {"class": "popisdetail"})).replace("<div class=\"popisdetail\">","").replace("</div>","")
+            print(f"PY: Parsing info: Header = {header}")
+            print(f"PY: Parsing info: Details = {details}")
 
             # Search for the target disposition keyword in the page content
-            target_disposition = False
+            is_target_disposition = False
             for search_disposition in search_dispositions_list:
                 # Search in header
                 if (search_disposition[0] in header) or (search_disposition[1] in header):
-                    target_disposition = True
+                    is_target_disposition = True
+                    print(f"PY: Target disposition found in = {header}")
                     advertised_property_details[6] = search_disposition[0]
                     break
 
                 # Search in description
                 elif (search_disposition[0] in details) or (search_disposition[1] in details):
-                    target_disposition = True
+                    is_target_disposition = True
+                    print(f"PY: Target disposition found in = {header}")
                     advertised_property_details[6] = search_disposition[0]
                     break
 
             # If target disposition found:
-            if target_disposition == True:
+            if is_target_disposition == True:
                 print(f"PY: Target disposition found.")
 
                 # Get Keywords about the property

@@ -289,6 +289,7 @@ def search_in_page(url):
 
 
                                 if visited == False:
+                                    print(f"PY: New item found: {advertised_property_details[2]}")
                                     get_details(website_url_root+advertised_property_details[2])
 
         # Returns 1 if on the last page, else 0 to proceed to the next page

@@ -168,12 +168,15 @@ def get_data_from_file(file_name):
 # Function to search for the pattern in a web page
 def get_details(url):
 
+    print(f"PY: In get_details function.")
     try:
         searched_property_details = ""
         global advertised_property_details
         response = requests.get(url)
+        print(f"PY: Getting property info...")
         if response.status_code == 200:
             page_content = response.text
+            print(f"PY: Got property info. Parsing info.")
 
             # Parse the page content using BeautifulSoup
             soup = BeautifulSoup(page_content, "html.parser")
@@ -197,6 +200,7 @@ def get_details(url):
 
             # If target disposition found:
             if target_disposition == True:
+                print(f"PY: Target disposition found.")
 
                 # Get Keywords about the property
                 for search_detail in search_details:

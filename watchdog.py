@@ -4,6 +4,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import re
 
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -33,12 +34,12 @@ search_requirements = os.environ["search_requirements"]
 
 # Note: Only APPEND new items at the end of the list, do not insert anything in the middle or beginning of the list
 search_dispositions_list = [
-    ["1+1","1 + 1"],
-    ["2+1","2 + 1"],
-    ["3+1","3 + 1"],
-    ["1+kk","1 + kk"],
-    ["2+kk","2 + kk"],
-    ["3+kk","3 + kk"]
+    ["1+1", "1 + 1", "1+1", "1+1"],
+    ["2+1", "2 + 1", "2+1", "2+1"],
+    ["3+1", "3 + 1", "3+1", "3+1"],
+    ["1+kk", "1 + kk", "1kk", "1+KK"],
+    ["2+kk", "2 + kk", "2kk", "2+KK"],
+    ["3+kk", "3 + kk", "3kk", "3+KK"]
 ]
 
 search_details = [
@@ -189,14 +190,20 @@ def get_details(url):
             is_target_disposition = False
             for search_disposition in search_dispositions_list:
                 # Search in header
-                if (search_disposition[0] in header) or (search_disposition[1] in header):
+                if ((search_disposition[0] in header) 
+                    or (search_disposition[1] in header)
+                    or (search_disposition[2] in header)
+                    or (search_disposition[3] in header)):
                     is_target_disposition = True
                     print(f"PY: Target disposition found in = {header}")
                     advertised_property_details[6] = search_disposition[0]
                     break
 
                 # Search in description
-                elif (search_disposition[0] in details) or (search_disposition[1] in details):
+                elif ((search_disposition[0] in details)
+                        or (search_disposition[1] in details)
+                        or (search_disposition[2] in details)
+                        or (search_disposition[3] in details)):
                     is_target_disposition = True
                     print(f"PY: Target disposition found in = {header}")
                     advertised_property_details[6] = search_disposition[0]

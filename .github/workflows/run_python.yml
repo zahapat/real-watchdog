@@ -11,7 +11,6 @@ on:
 env:
     author_email_address: ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
     author_name_surname: ${{ secrets.AUTHOR_NAME_SURNAME }}
-    search_requirements: ${{ secrets.SEARCH_REQUIREMENTS }}
     recepients_email: ${{ secrets.RECEPIENTS_EMAIL }}
     search_cities_list: ${{ secrets.SEARCH_CITIES_LIST }}
     zone_info: ${{ secrets.ZONE_INFO }}

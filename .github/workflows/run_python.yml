@@ -9,6 +9,9 @@ on:
 
 # Create Environment Variables
 env:
+    author_email_address: ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
+    author_name_surname: ${{ secrets.AUTHOR_NAME_SURNAME }}
+    search_requirements: ${{ secrets.SEARCH_REQUIREMENTS }}
     recepients_email: ${{ secrets.RECEPIENTS_EMAIL }}
     search_cities_list: ${{ secrets.SEARCH_CITIES_LIST }}
     zone_info: ${{ secrets.ZONE_INFO }}
@@ -53,3 +56,12 @@ jobs:
             - name: Run Python Script via Powershell
               shell: pwsh
               run: python watchdog.py
+
+            - name: Push new changes to remote
+              shell: pwsh
+              run: |
+                git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
+                git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
+                git add database
+                git commit -m "[refactor]: Update database via automated action"
+                git push origin main

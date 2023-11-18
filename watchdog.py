@@ -135,7 +135,7 @@ def get_data_from_file(file_name):
     try:
         global all_target_properties_details
         output_directory = os.path.dirname(os.path.realpath(__file__))
-        file_gen_fullpath = f"{output_directory}\\{file_name}"
+        file_gen_fullpath = f"{output_directory}\\database\\{file_name}"
 
         for i, search_disposition in enumerate(search_dispositions_list):
             if (file_name.split("_")[1].replace(".csv","") in search_disposition[0]):
@@ -169,22 +169,17 @@ def get_data_from_file(file_name):
 # Function to search for the pattern in a web page
 def get_details(url):
 
-    print(f"PY: In get_details function.")
     try:
         searched_property_details = ""
         global advertised_property_details
         response = requests.get(url)
-        print(f"PY: Getting property info...")
         if response.status_code == 200:
             page_content = response.text
-            print(f"PY: Got property info. Parsing info.")
 
             # Parse the page content using BeautifulSoup
             soup = BeautifulSoup(page_content, "html.parser")
             header = str(soup.find_all("h1", {"class": "nadpisdetail"})).replace("<h1 class=\"nadpisdetail\">","").replace("</h1>","")
             details = str(soup.find_all("div", {"class": "popisdetail"})).replace("<div class=\"popisdetail\">","").replace("</div>","")
-            print(f"PY: Parsing info: Header = {header}")
-            print(f"PY: Parsing info: Details = {details}")
 
             # Search for the target disposition keyword in the page content
             is_target_disposition = False
@@ -195,7 +190,6 @@ def get_details(url):
                     or (search_disposition[2] in header)
                     or (search_disposition[3] in header)):
                     is_target_disposition = True
-                    print(f"PY: Target disposition found in = {header}")
                     advertised_property_details[6] = search_disposition[0]
                     break
 
@@ -205,13 +199,11 @@ def get_details(url):
                         or (search_disposition[2] in details)
                         or (search_disposition[3] in details)):
                     is_target_disposition = True
-                    print(f"PY: Target disposition found in = {header}")
                     advertised_property_details[6] = search_disposition[0]
                     break
 
             # If target disposition found:
             if is_target_disposition == True:
-                print(f"PY: Target disposition found.")
 
                 # Get Keywords about the property
                 for search_detail in search_details:
@@ -304,7 +296,6 @@ def search_in_page(url):
 
 
                                 if visited == False:
-                                    print(f"PY: New item found: {advertised_property_details[2]}")
                                     get_details(website_url_root+advertised_property_details[2])
 
         # Returns 1 if on the last page, else 0 to proceed to the next page
@@ -334,7 +325,7 @@ def write_content_to_output_files(file_prefix):
     output_directory = os.path.dirname(os.path.realpath(__file__))
     for i in range(search_dispositions_list_len):
         file_gen_name = file_prefix+'_'+search_dispositions_list[i][0]+'.csv'
-        file_gen_fullpath = ('{0}{1}{2}'.format(output_directory, "\\", file_gen_name))
+        file_gen_fullpath = f"{output_directory}\\database\\{file_gen_name}"
 
         pd.DataFrame(all_target_properties_details[i]).to_csv(
             path_or_buf=file_gen_fullpath, 

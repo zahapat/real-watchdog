@@ -282,11 +282,10 @@ def search_in_page(url):
                                     for all_target_properties_detail in all_target_properties_details[i]:
 
                                         # Use short-circuit evaluation and utilize the and operation to 'fail the condition faster'
-                                        if (all_target_properties_detail[0] != "A") \
+                                        if (all_target_properties_detail[0] == "A") \
                                             and (advertised_property_details[2] in all_target_properties_detail[2]):
 
                                             # Mark as Active and set visited flag to True
-                                            all_target_properties_detail[0] = 'A'
                                             print(f"PY: Skip visited: {advertised_property_details[2]}")
                                             visited = True
                                             break
@@ -305,6 +304,30 @@ def search_in_page(url):
 
     except ValueError as e:
         print(f"Error while processing {url}: {e}")
+
+
+def check_for_active_urls():
+    global all_target_properties_details
+    print(f"PY: Sorting list by time added...")
+    for all_target_properties_detail in all_target_properties_details:
+        for all_target_property_detail in all_target_properties_detail:
+            try:
+                response = requests.get(website_url_root+all_target_property_detail[2])
+                if response.status_code == 200:
+                    page_content = response.text
+
+                    # Parse the page content using BeautifulSoup
+                    soup = BeautifulSoup(page_content, "html.parser")
+
+                    # Check if the date added matches the logged value, then it is still an active item
+                    date_added = str(soup.find_all("span", {"class": "velikost10"})[0]).replace("<span class=\"velikost10\">","").replace("</span>","").replace(" ", "").split('-[')[1].replace("]", "")
+                    if datetime.strptime(date_added, "%d.%m.%Y").date().strftime("%d.%m.%Y") in all_target_property_detail[1]:
+                        all_target_property_detail[0] = "A"
+                    else:
+                        print(f"PY: Inactive URL: {website_url_root+all_target_property_detail[2]}")
+
+            except ValueError as e:
+                print(f"PY: Error while processing: {website_url_root+all_target_property_detail[2]}: {e}")
 
 
 # Sort the databases from the newest to the oldest added item
@@ -350,6 +373,8 @@ def main():
     for search_disposition in search_dispositions_list:
         get_data_from_file(f'prodej_{search_disposition[0]}.csv')
 
+    # Check if logged URLs are still active
+    check_for_active_urls()
 
     # Start the search from the initial URL, loop until there is at least one advertisement
     search_in_page(f"{website_url_root}/prodam/byt/{search_requirements}")
@@ -371,6 +396,8 @@ def main():
     for search_disposition in search_dispositions_list:
         get_data_from_file(f'pronajem_{search_disposition[0]}.csv')
 
+    # Check if logged URLs are still active
+    check_for_active_urls()
 
     # Start the search from the initial URL, loop until there is at least one advertisement
     search_in_page(f"{website_url_root}/pronajmu/byt/{search_requirements}")

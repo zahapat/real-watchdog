@@ -21,6 +21,10 @@ env:
     website_url_root: ${{ secrets.WEBSITE_URL_ROOT }}
     search_requirements: ${{ secrets.SEARCH_REQUIREMENTS }}
 
+# Allow write permissions to the remote repo
+permissions:
+  contents: write
+
 # Create Jobs
 jobs:
     run_python_via_powershell:

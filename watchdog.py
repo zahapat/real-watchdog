@@ -34,12 +34,13 @@ search_requirements = os.environ["search_requirements"]
 
 # Note: Only APPEND new items at the end of the list, do not insert anything in the middle or beginning of the list
 search_dispositions_list = [
-    ["1+1", "1 + 1", "1+1", "1+1"],
-    ["2+1", "2 + 1", "2+1", "2+1"],
-    ["3+1", "3 + 1", "3+1", "3+1"],
-    ["1+kk", "1 + kk", "1kk", "1+KK"],
-    ["2+kk", "2 + kk", "2kk", "2+KK"],
-    ["3+kk", "3 + kk", "3kk", "3+KK"]
+    # STR           REGEX
+    ["1+1",  r"\b1\s?\+\s?1\b"],
+    ["2+1",  r"\b2\s?\+\s?1\b"],
+    ["3+1",  r"\b3\s?\+\s?1\b"],
+    ["1+kk", r"\b1\s?\+?\s?[k|K]{2}\b|\bgar[s|z]on\w+\b|\bstudio\b"],
+    ["2+kk", r"\b2\s?\+?\s?[k|K]{2}\b"],
+    ["3+kk", r"\b3\s?\+?\s?[k|K]{2}\b"]
 ]
 
 search_details = [
@@ -52,6 +53,7 @@ search_details = [
     "zateplen",
     "MHD",
     "aukc",
+    "balk",
     "plastová okna"
 ]
 
@@ -185,19 +187,15 @@ def get_details(url):
             is_target_disposition = False
             for search_disposition in search_dispositions_list:
                 # Search in header
-                if ((search_disposition[0] in header) 
-                    or (search_disposition[1] in header)
-                    or (search_disposition[2] in header)
-                    or (search_disposition[3] in header)):
+                if ((search_disposition[0] in header)               # String (static, faster execution)
+                    or re.compile(search_disposition[1]).findall(header)):   # Regex (flexible, slower execution)
                     is_target_disposition = True
                     advertised_property_details[6] = search_disposition[0]
                     break
 
                 # Search in description
-                elif ((search_disposition[0] in details)
-                        or (search_disposition[1] in details)
-                        or (search_disposition[2] in details)
-                        or (search_disposition[3] in details)):
+                elif ((search_disposition[0] in details)            # String (static, faster execution)
+                    or re.compile(search_disposition[1]).findall(details)):  # Regex (flexible, slower execution)
                     is_target_disposition = True
                     advertised_property_details[6] = search_disposition[0]
                     break
@@ -308,7 +306,7 @@ def search_in_page(url):
 
 def check_for_active_urls():
     global all_target_properties_details
-    print(f"PY: Sorting list by time added...")
+    print(f"PY: Checking for active URLs...")
     for all_target_properties_detail in all_target_properties_details:
         for all_target_property_detail in all_target_properties_detail:
             try:
@@ -324,10 +322,10 @@ def check_for_active_urls():
                     if datetime.strptime(date_added, "%d.%m.%Y").date().strftime("%d.%m.%Y") in all_target_property_detail[1]:
                         all_target_property_detail[0] = "A"
                     else:
-                        print(f"PY: Inactive URL: {website_url_root+all_target_property_detail[2]}")
+                        print(f"PY: Inactive URL: {all_target_property_detail[2]}")
 
             except ValueError as e:
-                print(f"PY: Error while processing: {website_url_root+all_target_property_detail[2]}: {e}")
+                print(f"PY: Error while processing: {all_target_property_detail[2]}: {e}")
 
 
 # Sort the databases from the newest to the oldest added item

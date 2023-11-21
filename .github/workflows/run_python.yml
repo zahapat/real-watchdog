@@ -20,6 +20,7 @@ env:
     mail_app_password: ${{ secrets.MAIL_APP_PASSWORD }}
     website_url_root: ${{ secrets.WEBSITE_URL_ROOT }}
     search_requirements: ${{ secrets.SEARCH_REQUIREMENTS }}
+    mask: ${{ secrets.MASK }}
 
 # Allow write permissions to the remote repo
 permissions:

@@ -472,7 +472,6 @@ def main():
 
     print(f"PY: Getting data from website DONE.")
     advertisements_done = 0
-    print("new_target_properties_details = ", new_target_properties_details)
 
     sort_list_by_date()
     write_content_to_output_files(f'prodej')   
@@ -516,7 +515,6 @@ def main():
 
     print(f"PY: Getting data from website DONE.")
     advertisements_done = 0
-    print("new_target_properties_details = ", new_target_properties_details)
 
     sort_list_by_date()
     write_content_to_output_files(f'pronajem')

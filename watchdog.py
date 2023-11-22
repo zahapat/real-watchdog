@@ -109,10 +109,10 @@ def send_email(purpose, to_recepients_list):
     body2 = ""
     for i, new_target_properties_detail in enumerate(new_target_properties_details):
         for new_target_property_detail in new_target_properties_detail:
-            if new_target_property_detail[6] in search_dispositions_list[i][0]:
-                body2 += f"{new_target_property_detail[6]}, {new_target_property_detail[5]} {new_target_property_detail[4]}, přidáno dne {new_target_property_detail[1]}:\n"
-                body2 += f"Odkaz: {new_target_property_detail[2]}\n"
-                body2 += f"Detaily: {new_target_property_detail[3]} Kč {new_target_property_detail[7]}\n"
+            if new_target_property_detail[7] in search_dispositions_list[i][0]:
+                body2 += f"{new_target_property_detail[7]}, {new_target_property_detail[6]} {new_target_property_detail[5]}, přidáno dne {new_target_property_detail[1]}:\n"
+                body2 += f"Odkaz: {new_target_property_detail[3]}\n"
+                body2 += f"Detaily: {new_target_property_detail[4]} Kč {new_target_property_detail[8]}\n"
                 body2 += f" \n"
         if len(new_target_properties_detail) > 0:
             body2 += f"\n\n"
@@ -462,16 +462,17 @@ def main():
         # Wait for threads to complete tasks
         for page in range (min_scan_pages, max_scan_pages):
             threads[page-min_scan_pages].join()
-        
+
         min_scan_pages = min_scan_pages + threads_count
         max_scan_pages = max_scan_pages + threads_count
-        
+
         if advertisements_done == 1:
             print(f"PY: Reached the last page. Break.")
             break
 
     print(f"PY: Getting data from website DONE.")
     advertisements_done = 0
+    print("new_target_properties_details = ", new_target_properties_details)
 
     sort_list_by_date()
     write_content_to_output_files(f'prodej')   
@@ -515,6 +516,7 @@ def main():
 
     print(f"PY: Getting data from website DONE.")
     advertisements_done = 0
+    print("new_target_properties_details = ", new_target_properties_details)
 
     sort_list_by_date()
     write_content_to_output_files(f'pronajem')

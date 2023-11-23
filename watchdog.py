@@ -1,19 +1,17 @@
 import requests
-import queue
-import time
-import threading
-import os
 import pandas as pd
+from queue import Queue
+from time import process_time, gmtime, time, strftime
+from os import environ, path
+from threading import Thread
 from multiprocessing import Process
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-import re
-
-import smtplib
+from re import compile, findall
+from smtplib import SMTP
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
 from sys import stdin, stdout
 
 # Configure the environment to support accented characters
@@ -29,19 +27,19 @@ agent = {
 #                     SECRETS
 # -------------------------------------------------
 # Array envs
-recepients_list = list(filter(None, os.environ["recepients_email"].split(',')))
-search_cities_list = list(filter(None, str(os.environ["search_cities_list"]).split(',')))
+recepients_list = list(filter(None, environ["recepients_email"].split(',')))
+search_cities_list = list(filter(None, str(environ["search_cities_list"]).split(',')))
 
 
 # String envs
-zone_info = os.environ["zone_info"]
-smtp_server = os.environ["smtp_server"]
-smtp_port = int(os.environ["smtp_port"])
-smtp_username = os.environ["smtp_username"]
-mail_app_password = os.environ["mail_app_password"]
-website_url_root = os.environ["website_url_root"]
-search_requirements = os.environ["search_requirements"]
-mask = int(os.environ["mask"])
+zone_info = environ["zone_info"]
+smtp_server = environ["smtp_server"]
+smtp_port = int(environ["smtp_port"])
+smtp_username = environ["smtp_username"]
+mail_app_password = environ["mail_app_password"]
+website_url_root = environ["website_url_root"]
+search_requirements = environ["search_requirements"]
+mask = int(environ["mask"])
 
 
 # Note: Only APPEND new items at the end of the list, do not insert anything in the middle or beginning of the list
@@ -78,9 +76,6 @@ advertisements_done = [0 for i in range(cpu_cores)]
 
 # Send an email
 def send_email(purpose, to_recepients_list, new_target_properties_details):
-    # global search_dispositions_list
-    # global new_target_properties_details
-
     send_email = False
     search_dispositions_list_len = len(search_dispositions_list)
     for i in range(search_dispositions_list_len):
@@ -122,7 +117,7 @@ def send_email(purpose, to_recepients_list, new_target_properties_details):
     body = str(body1)+str(body2)
     msg.attach(MIMEText(body))
 
-    with smtplib.SMTP(smtp_server, smtp_port) as smtp:
+    with SMTP(smtp_server, smtp_port) as smtp:
         smtp.starttls()
         smtp.login(smtp_username, mail_app_password)
         smtp.sendmail(from_addr=smtp_username, to_addrs=recepients_list, msg=msg.as_string())
@@ -150,7 +145,7 @@ def get_data_from_file(file_name):
     try:
         print(f"PY: Getting data from CSV files...")
         target_properties_details = [] # Try not global this time
-        output_directory = os.path.dirname(os.path.realpath(__file__))
+        output_directory = path.dirname(path.realpath(__file__))
         file_gen_fullpath = f"{output_directory}\\database\\{file_name}"
 
         target_properties_details = pd.read_csv(
@@ -202,14 +197,14 @@ def get_details(url, advertised_property_details, new_target_properties_details_
             for search_disposition in search_dispositions_list:
                 # Search in header
                 if ((search_disposition[0] in header)                       # String (static, faster execution)
-                    or re.compile(search_disposition[1]).findall(header)):  # Regex (flexible, slower execution)
+                    or compile(search_disposition[1]).findall(header)):  # Regex (flexible, slower execution)
                     is_target_disposition = True
                     advertised_property_details[7] = search_disposition[0]
                     break
 
                 # Search in description
                 elif ((search_disposition[0] in details)            # String (static, faster execution)
-                    or re.compile(search_disposition[1]).findall(details)):  # Regex (flexible, slower execution)
+                    or compile(search_disposition[1]).findall(details)):  # Regex (flexible, slower execution)
                     is_target_disposition = True
                     advertised_property_details[7] = search_disposition[0]
                     break
@@ -255,7 +250,6 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
             0,      # [7] Disposition
             0       # [8] Details
         ]
-        # global all_target_properties_details
         response = requests.get(url=url, headers=agent)
         if response.status_code == 200:
             page_content = response.text
@@ -352,14 +346,14 @@ def check_for_active_urls_threaded(all_target_properties_details):
     threads_all_target_properties_details_len =[[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_queue = [[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_indices = [[] for i in range(len(all_target_properties_details))]
+
     for i, all_target_properties_detail in enumerate(all_target_properties_details):
         for pos, all_target_property_detail in enumerate(all_target_properties_detail):
             # Skip whether or not the item is active if it has been inactive for two days, otherwise check newer/active ones
-    
             if datetime.strptime(all_target_property_detail[2], "%d.%m.%Y") >= (datetime.today() - timedelta(days=2)):
                 threads_all_target_properties_details_indices[i].append(pos)
-                threads_all_target_properties_details_queue[i].append(queue.Queue())
-                threads_all_target_properties_details[i].append(threading.Thread(
+                threads_all_target_properties_details_queue[i].append(Queue())
+                threads_all_target_properties_details[i].append(Thread(
                     target=check_if_active_property_thread, 
                     args=(all_target_property_detail,threads_all_target_properties_details_queue[i][-1],)
                 ))
@@ -369,9 +363,8 @@ def check_for_active_urls_threaded(all_target_properties_details):
         [threads_all_target_properties_details[i][j].join() for j in range(threads_all_target_properties_details_len[i])]
 
 
+    # Update the values after running multiple threads based on the content in the queue
     for i, all_target_properties_detail in enumerate(all_target_properties_details):
-        # [threads_all_target_properties_details[i][j].join() for j in range(threads_all_target_properties_details_len[i])]
-        # Update the values after running multiple threads based on the content in the queue
         for j in range(threads_all_target_properties_details_len[i]):
             all_target_properties_detail[threads_all_target_properties_details_indices[i][j]] = threads_all_target_properties_details_queue[i][j].get()
 
@@ -395,11 +388,10 @@ def sort_list_by_date(all_target_properties_details):
 # Write the content to the respective output files
 def write_content_to_output_files(file_prefix, all_target_properties_details):
     print(f"PY: Writing data to CSV files...")
-    # global all_target_properties_details
 
     # Using len() and indices is 15 seconds faster than for _ in _ method in the first for loop
     search_dispositions_list_len = len(search_dispositions_list)
-    output_directory = os.path.dirname(os.path.realpath(__file__))
+    output_directory = path.dirname(path.realpath(__file__))
     for i in range(search_dispositions_list_len):
         file_gen_name = file_prefix+'_'+search_dispositions_list[i][0]+'.csv'
         file_gen_fullpath = f"{output_directory}\\database\\{file_gen_name}"
@@ -476,11 +468,11 @@ def find_new_and_update_all_properties_from_websites(
     print(f"PY: Getting data from website...")
     global advertisements_done
     threads_page = []
-    new_target_properties_details_queue = queue.Queue()
+    new_target_properties_details_queue = Queue()
     min_scan_pages = 1
     max_scan_pages = threads_count
 
-    threads_page.append(threading.Thread(
+    threads_page.append(Thread(
         target=search_in_page,
         args=(
             f"{website_url_root}{website_substring}{search_requirements}",
@@ -493,7 +485,7 @@ def find_new_and_update_all_properties_from_websites(
 
     while advertisements_done[int(cpu_id)] == 0:
         for page in range(min_scan_pages, max_scan_pages):
-            threads_page.append(threading.Thread(
+            threads_page.append(Thread(
                 target=search_in_page, 
                 args=(
                     f"{website_url_root}{website_substring}{page*20}/{search_requirements}",
@@ -579,17 +571,12 @@ def main():
     [parallel_processes[i].join() for i in range(len(parallel_processes))]
 
 
-    # main_execution_flow(
-    #     f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, cpu_ids[1])
-    # main_execution_flow(
-    #     f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, cpu_ids[0])
-
 if __name__ == '__main__':
-    cpu_time_start, wall_time_start = time.process_time(), time.time()
+    cpu_time_start, wall_time_start = process_time(), time()
     main()
-    elapsed_cpu_time, elapsed_wall_time = (time.process_time() - cpu_time_start), (time.time() - wall_time_start)
-    print("PY: CPU time elapsed: ", time.strftime("%H:%M:%S", time.gmtime(elapsed_cpu_time)))
-    print("PY: Wall time elapsed: ", time.strftime("%H:%M:%S", time.gmtime(elapsed_wall_time)))
+    elapsed_cpu_time, elapsed_wall_time = (process_time() - cpu_time_start), (time() - wall_time_start)
+    print("PY: CPU time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_cpu_time)))
+    print("PY: Wall time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_wall_time)))
 
 
 

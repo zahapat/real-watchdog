@@ -1,24 +1,33 @@
 from multiprocessing import Process
 from time import process_time, gmtime, time, strftime
 from os import path
-import watchdog_lib
+from watchdog_lib import unmask_database_items, \
+                         check_for_active_urls_threaded, \
+                         write_content_to_output_files, \
+                         send_report_email, \
+                         remove_dir, \
+                         recepients_list
+                         
+                         
+
+                         
 
 
 def main():
 
     # Properties for sale
-    all_target_properties_details = watchdog_lib.unmask_database_items("prodej")
-    watchdog_lib.check_for_active_urls_threaded(all_target_properties_details, 0)
-    watchdog_lib.write_content_to_output_files("prodej", all_target_properties_details, directory="temp")
-    watchdog_lib.send_report_email("prodej", "k prodeji", watchdog_lib.recepients_list)
-    watchdog_lib.remove_dir(f"{path.dirname(path.realpath(__file__))}\\temp")
+    all_target_properties_details = unmask_database_items("prodej")
+    check_for_active_urls_threaded(all_target_properties_details, 0)
+    write_content_to_output_files("prodej", all_target_properties_details, directory="temp")
+    send_report_email("prodej", "k prodeji", recepients_list)
+    remove_dir(f"{path.dirname(path.realpath(__file__))}\\temp")
 
     # Properties for rent
-    all_target_properties_details = watchdog_lib.unmask_database_items("pronajem")
-    watchdog_lib.check_for_active_urls_threaded(all_target_properties_details, 0)
-    watchdog_lib.write_content_to_output_files("pronajem", all_target_properties_details, directory="temp")
-    watchdog_lib.send_report_email("pronajem", "k pronájmu", watchdog_lib.recepients_list)
-    watchdog_lib.remove_dir(f"{path.dirname(path.realpath(__file__))}\\temp")
+    all_target_properties_details = unmask_database_items("pronajem")
+    check_for_active_urls_threaded(all_target_properties_details, 0)
+    write_content_to_output_files("pronajem", all_target_properties_details, directory="temp")
+    send_report_email("pronajem", "k pronájmu", recepients_list)
+    remove_dir(f"{path.dirname(path.realpath(__file__))}\\temp")
 
 
 

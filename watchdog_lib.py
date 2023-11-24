@@ -1,15 +1,16 @@
 import requests
 import pandas as pd
 from queue import Queue
-from os import environ, path
+from os import environ, path, listdir, mkdir
 from threading import Thread
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from re import compile, findall
 from smtplib import SMTP
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 from sys import stdin, stdout
 
 # Configure the environment to support accented characters
@@ -71,6 +72,17 @@ advertisements_done = [0 for i in range(cpu_cores)]
 
 
 
+# Create directory if noexist
+def create_dir_if_noexist(path_to_dir):
+    if not path.exists(f"{path_to_dir}"):
+        mkdir(f"{path_to_dir}")
+        print(f"PY: Created {path_to_dir}")
+
+# Remove directory if exist
+def remove_dir(path):
+    import shutil
+    shutil.rmtree(f"{path}")
+    print(f"PY: Removed {path}")
 
 # Send an email
 def send_email(purpose, to_recepients_list, new_target_properties_details):
@@ -129,22 +141,66 @@ def send_email(purpose, to_recepients_list, new_target_properties_details):
     return 0
 
 
+def send_report_email(purpose, purpose_context, to_recepients_list):
+    
+    subject = 'Watchdog: report položek '+purpose_context+' ke dni '\
+        +str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y"))
+
+    msg = MIMEMultipart()
+    msg['From'] = smtp_username
+    msg['To'] = ', '.join(to_recepients_list)
+    msg['Subject'] = subject
+
+    # Body: Intro
+    body1 = (
+        f"Report všech položek "+purpose_context+" naleznete v příloze tohoto emailu.\n\n"
+        f" \n\n"
+    )
+    msg.attach(MIMEText(body1))
+
+    files_path = f"{path.dirname(path.realpath(__file__))}\\temp"
+    files = [f for f in listdir(files_path) if path.isfile(path.join(files_path, f))]
+
+    for file in files:
+        with open(f"{files_path}\\{file}", "rb") as fil:
+            if purpose in file:
+                part = MIMEApplication(
+                    fil.read(),
+                    Name=path.basename(file)
+                )
+        # After the file is closed
+        part['Content-Disposition'] = 'attachment; filename="%s"' % path.basename(file)
+        msg.attach(part)
+
+    with SMTP(smtp_server, smtp_port) as smtp:
+        smtp.starttls()
+        smtp.login(smtp_username, mail_app_password)
+        smtp.sendmail(from_addr=smtp_username, to_addrs=recepients_list, msg=msg.as_string())
+
+
+    print(f"PY: Email has been sent successfully.")
+
+    return 0
+
+
 # Create a file if does not exist in the current file directory
-def create_file(output_directory, file_name):
+def create_file(output_directory, file_name, directory="database"):
     file_gen_name = file_name
-    file_gen_fullpath = f"{output_directory}\\database\\{file_gen_name}"
+    create_dir_if_noexist(f"{output_directory}\\{directory}")
+    file_gen_fullpath = f"{output_directory}\\{directory}\\{file_gen_name}"
     print(f"PY: New file {file_gen_name} created: {file_gen_fullpath}")
     file_gen_line = open(file_gen_fullpath, 'w', encoding="utf-8-sig")
     file_gen_line.close()
 
 
 # Function to get already searched urls from files in the current file directory
-def get_data_from_file(file_name):
+def get_data_from_file(file_name, directory="database"):
     try:
         print(f"PY: Getting data from CSV files...")
         target_properties_details = [] # Try not global this time
         output_directory = path.dirname(path.realpath(__file__))
-        file_gen_fullpath = f"{output_directory}\\database\\{file_name}"
+        create_dir_if_noexist(f"{output_directory}\\{directory}")
+        file_gen_fullpath = f"{output_directory}\\{directory}\\{file_name}"
 
         target_properties_details = pd.read_csv(
             file_gen_fullpath, 
@@ -165,11 +221,9 @@ def get_data_from_file(file_name):
             }
         ).assign(Active=lambda x: 'X').values.tolist()
 
-
-
     except Exception as e:
         # print(f"PY: ErrorHandler: Detected Error: {e}. Creating a file")
-        create_file(output_directory, file_name)
+        create_file(output_directory, file_name, directory)
     
     print(f"PY: Getting data from CSV files DONE.")
 
@@ -312,9 +366,9 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
         print(f"Error while processing {url}: {e}")
 
 
-def check_if_active_property_thread(all_target_property_detail, all_target_properties_detail_queue):
+def check_if_active_property_thread(all_target_property_detail, all_target_properties_detail_queue, this_mask):
     try:
-        response = requests.get(url=mask_char_values_in_string(all_target_property_detail[3], -mask), headers=agent)
+        response = requests.get(url=mask_char_values_in_string(all_target_property_detail[3], -1*this_mask), headers=agent)
         if response.status_code == 200:
             page_content = response.text
 
@@ -327,17 +381,17 @@ def check_if_active_property_thread(all_target_property_detail, all_target_prope
                 all_target_property_detail[0] = "A"
                 all_target_property_detail[2] = str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y")) # Override Last Active Time
             else:
-                print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -mask)}")
+                print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}")
 
     except ValueError as e:
-        print(f"PY: check_if_active_property_thread: Error while processing: {mask_char_values_in_string(all_target_property_detail[3], -mask)}: {e}")
+        print(f"PY: check_if_active_property_thread: Error while processing: {all_target_property_detail[3]}: {e}")
         print(f"PY: check_if_active_property_thread: DEBUG: all_target_property_detail = {all_target_property_detail}")
 
     all_target_properties_detail_queue.put(all_target_property_detail.copy())
 
 
 
-def check_for_active_urls_threaded(all_target_properties_details):
+def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask):
     # global all_target_properties_details
     print(f"PY: Checking for active URLs...")
     threads_all_target_properties_details = [[] for i in range(len(all_target_properties_details))]
@@ -353,7 +407,9 @@ def check_for_active_urls_threaded(all_target_properties_details):
                 threads_all_target_properties_details_queue[i].append(Queue())
                 threads_all_target_properties_details[i].append(Thread(
                     target=check_if_active_property_thread, 
-                    args=(all_target_property_detail,threads_all_target_properties_details_queue[i][-1],)
+                    args=(all_target_property_detail,
+                          threads_all_target_properties_details_queue[i][-1],
+                          this_mask,)
                 ))
                 threads_all_target_properties_details[i][-1].start()
 
@@ -384,7 +440,7 @@ def sort_list_by_date(all_target_properties_details):
 
 
 # Write the content to the respective output files
-def write_content_to_output_files(file_prefix, all_target_properties_details):
+def write_content_to_output_files(file_prefix, all_target_properties_details, directory="database"):
     print(f"PY: Writing data to CSV files...")
 
     # Using len() and indices is 15 seconds faster than for _ in _ method in the first for loop
@@ -392,7 +448,8 @@ def write_content_to_output_files(file_prefix, all_target_properties_details):
     output_directory = path.dirname(path.realpath(__file__))
     for i in range(search_dispositions_list_len):
         file_gen_name = file_prefix+'_'+search_dispositions_list[i][0]+'.csv'
-        file_gen_fullpath = f"{output_directory}\\database\\{file_gen_name}"
+        create_dir_if_noexist(f"{output_directory}\\{directory}")
+        file_gen_fullpath = f"{output_directory}\\{directory}\\{file_gen_name}"
 
         pd.DataFrame(all_target_properties_details[i]).to_csv(
             path_or_buf=file_gen_fullpath, 
@@ -544,3 +601,20 @@ def main_execution_flow(
 
     # Send email if new properties have been detected
     send_email(f"{mail_purpose_occurrence_in_context_keyword}", recepients_list, new_target_properties_details)
+
+
+def unmask_database_items(file_purpose_keyword):
+    # Create an array of output files if noexist and get data from them
+    file_purpose_keyword = "pronajem"
+    all_target_properties_details = [[] for i in search_dispositions_list]
+    for i, search_disposition in enumerate(search_dispositions_list):
+        all_target_properties_details[i] = get_data_from_file(
+            f'{file_purpose_keyword}_{search_disposition[0]}.csv')
+        
+        # Unmask
+        for all_target_properties_detail in all_target_properties_details[i]:
+            all_target_properties_detail[3] = mask_char_values_in_string(all_target_properties_detail[3], -mask)
+            all_target_properties_detail[5] = mask_char_values_in_string(all_target_properties_detail[5], -mask)
+            all_target_properties_detail[6] = mask_char_values_in_string(all_target_properties_detail[6], -mask)
+
+    return all_target_properties_details

@@ -605,7 +605,6 @@ def main_execution_flow(
 
 def unmask_database_items(file_purpose_keyword):
     # Create an array of output files if noexist and get data from them
-    file_purpose_keyword = "pronajem"
     all_target_properties_details = [[] for i in search_dispositions_list]
     for i, search_disposition in enumerate(search_dispositions_list):
         all_target_properties_details[i] = get_data_from_file(

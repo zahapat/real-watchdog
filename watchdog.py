@@ -151,8 +151,9 @@ def get_data_from_file(file_name):
         target_properties_details = pd.read_csv(
             file_gen_fullpath, 
             encoding="utf-8-sig",
-            sep = ',', header=None, 
-            names=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Detail'], 
+            sep = ',', header=None,
+            skiprows = 1,
+            names=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Details'], 
             dtype={
                 'Active': 'string',
                 'Date Added': 'string',
@@ -398,7 +399,8 @@ def write_content_to_output_files(file_prefix, all_target_properties_details):
 
         pd.DataFrame(all_target_properties_details[i]).to_csv(
             path_or_buf=file_gen_fullpath, 
-            sep = ',', header=None, 
+            sep = ',', 
+            header=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Details'], 
             encoding="utf-8-sig", 
             index=False
         )
@@ -483,7 +485,7 @@ def find_new_and_update_all_properties_from_websites(
     threads_page[-1].start()
 
     while advertisements_done[int(cpu_id)] == 0:
-        print(f"Core: {int(cpu_id)}, pages {min_scan_pages}-{max_scan_pages}")
+        # print(f"Core: {int(cpu_id)}, pages {min_scan_pages}-{max_scan_pages}")
         for page in range(min_scan_pages, max_scan_pages):
             threads_page.append(Thread(
                 target=search_in_page, 
@@ -574,9 +576,11 @@ def main():
 
 
 if __name__ == '__main__':
-    cpu_time_start, wall_time_start = process_time(), time()
+    cpu_time_start = process_time()
+    wall_time_start = time()
     main()
-    elapsed_cpu_time, elapsed_wall_time = (process_time() - cpu_time_start), (time() - wall_time_start)
+    elapsed_cpu_time = process_time() - cpu_time_start
+    elapsed_wall_time = time() - wall_time_start
     print("PY: CPU time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_cpu_time)))
     print("PY: Wall time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_wall_time)))
 

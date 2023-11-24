@@ -443,7 +443,6 @@ def append_all_new_properties(new_target_properties_details_queue, all_target_pr
     while not new_target_properties_details_queue.empty():
         # Get one item from the queue holding information about the new property
         new_target_properties_detail = new_target_properties_details_queue.get()
-        print("new_target_properties_detail = ", new_target_properties_detail)
 
         # Sort to the corresponding disposition bucket
         for i, (search_disposition) in enumerate(search_dispositions_list):
@@ -484,6 +483,7 @@ def find_new_and_update_all_properties_from_websites(
     threads_page[-1].start()
 
     while advertisements_done[int(cpu_id)] == 0:
+        print(f"Core: {int(cpu_id)}, pages {min_scan_pages}-{max_scan_pages}")
         for page in range(min_scan_pages, max_scan_pages):
             threads_page.append(Thread(
                 target=search_in_page, 
@@ -497,7 +497,8 @@ def find_new_and_update_all_properties_from_websites(
             threads_page[-1].start()
 
         # Wait for threads to complete tasks
-        [threads_page[i].join() for i in range (len(threads_page))]
+        threads_page_len = len(threads_page)
+        [threads_page[i].join() for i in range (threads_page_len)]
 
         min_scan_pages = min_scan_pages + threads_count
         max_scan_pages = max_scan_pages + threads_count
@@ -549,7 +550,8 @@ def main_execution_flow(
 
 def main():
 
-    threads_count = 512
+    # Important: Minimum allowed number of the 'thread_count' variable is 2
+    threads_count = 5
     parallel_processes = []
 
     # ----------------------------------------------------------------------------

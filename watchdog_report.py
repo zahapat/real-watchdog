@@ -7,10 +7,6 @@ from watchdog_lib import unmask_database_items, \
                          send_report_email, \
                          remove_dir, \
                          recepients_list
-                         
-                         
-
-                         
 
 
 def main():
@@ -28,7 +24,6 @@ def main():
     write_content_to_output_files("pronajem", all_target_properties_details, directory="temp")
     send_report_email("pronajem", "k pronájmu", recepients_list)
     remove_dir(f"{path.dirname(path.realpath(__file__))}\\temp")
-
 
 
 if __name__ == '__main__':

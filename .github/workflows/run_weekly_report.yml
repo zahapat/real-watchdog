@@ -1,11 +1,11 @@
 # Workflow name
-name: Run Python Script via Windows Powershell
+name: Run Python Watchdog Weekly Report Script via Windows Powershell
 
 # Run this workflow at scheduled times
 on:
     schedule:
     # * is a special character in YAML so you have to quote this string
-    - cron:  '0 8,10,12,14,16,18,20 * * *'
+    - cron:  '0 10 7,14,21,28 * *'
 
 # Create Environment Variables
 env:
@@ -21,10 +21,6 @@ env:
     website_url_root: ${{ secrets.WEBSITE_URL_ROOT }}
     search_requirements: ${{ secrets.SEARCH_REQUIREMENTS }}
     mask: ${{ secrets.MASK }}
-
-# Allow write permissions to the remote repo
-permissions:
-  contents: write
 
 # Create Jobs
 jobs:
@@ -59,13 +55,4 @@ jobs:
 
             - name: Run Python Script via Powershell
               shell: pwsh
-              run: python watchdog.py
-
-            - name: Push new changes to remote
-              shell: pwsh
-              run: |
-                git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
-                git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
-                git add database
-                git commit -m "[refactor]: Update database via automated action"
-                git push origin main
+              run: python watchdog_repoert.py

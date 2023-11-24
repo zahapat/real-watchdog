@@ -1,0 +1,71 @@
+# Workflow name
+name: Run Python Watchdog Script via Windows Powershell
+
+# Run this workflow at scheduled times
+on:
+    schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '0 8,10,12,14,16,18,20 * * *'
+
+# Create Environment Variables
+env:
+    author_email_address: ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
+    author_name_surname: ${{ secrets.AUTHOR_NAME_SURNAME }}
+    recepients_email: ${{ secrets.RECEPIENTS_EMAIL }}
+    search_cities_list: ${{ secrets.SEARCH_CITIES_LIST }}
+    zone_info: ${{ secrets.ZONE_INFO }}
+    smtp_server: ${{ secrets.SMTP_SERVER }}
+    smtp_port: ${{ secrets.SMTP_PORT }}
+    smtp_username: ${{ secrets.SMTP_USERNAME }}
+    mail_app_password: ${{ secrets.MAIL_APP_PASSWORD }}
+    website_url_root: ${{ secrets.WEBSITE_URL_ROOT }}
+    search_requirements: ${{ secrets.SEARCH_REQUIREMENTS }}
+    mask: ${{ secrets.MASK }}
+
+# Allow write permissions to the remote repo
+permissions:
+  contents: write
+
+# Create Jobs
+jobs:
+    run_python_via_powershell:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            max-parallel: 1
+            matrix:
+                os: [windows-latest]
+                python-version: ['3.11']
+            fail-fast: false
+
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v3
+
+            - name: Setup Python Version ${{ matrix.python-version }}
+              uses: actions/setup-python@v4
+              id: setuppython
+              with:
+                python-version: ${{ matrix.python-version }}
+
+            - uses: actions/cache@v3
+              id: cache
+              with:
+                path: ${{ env.pythonLocation }}
+                key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-test1
+
+            - name: Install Dependencies
+              if: steps.cache.outputs.cache-hit != 'true'
+              run: pip install -r requirements.txt
+
+            - name: Run Python Script via Powershell
+              shell: pwsh
+              run: python watchdog.py
+
+            - name: Push new changes to remote
+              shell: pwsh
+              run: |
+                git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
+                git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
+                git add database
+                git commit -m "[refactor]: Update database via automated action"
+                git push origin main

@@ -375,8 +375,11 @@ def check_if_active_property_thread(all_target_property_detail, all_target_prope
             # Parse the page content using BeautifulSoup
             soup = BeautifulSoup(page_content, "html.parser")
 
-            # Check if the date added matches the logged value, then it is still an active item
-            date_added = str(soup.find_all("span", {"class": "velikost10"})[0]).replace("<span class=\"velikost10\">","").replace("</span>","").replace(" ", "").split('-[')[1].replace("]", "")
+            # Check if the date added matches the logged value, then it is still an active item, Try if the property has been topped or not
+            try:
+                date_added = str(soup.find_all("span", {"class": "velikost10"})[0]).replace("<span class=\"velikost10\">","").replace("</span>","").replace(" ", "").split('-[')[2].replace("]", "")
+            except IndexError:
+                date_added = str(soup.find_all("span", {"class": "velikost10"})[0]).replace("<span class=\"velikost10\">","").replace("</span>","").replace(" ", "").split('-[')[1].replace("]", "")
             if datetime.strptime(date_added, "%d.%m.%Y").date().strftime("%d.%m.%Y") in all_target_property_detail[1]:
                 all_target_property_detail[0] = "A"
                 all_target_property_detail[2] = str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y")) # Override Last Active Time
@@ -600,7 +603,7 @@ def main_execution_flow(
     write_content_to_output_files(f'{file_purpose_keyword}', all_target_properties_details)   
 
     # Send email if new properties have been detected
-    send_email(f"{mail_purpose_occurrence_in_context_keyword}", recepients_list, new_target_properties_details)
+    # send_email(f"{mail_purpose_occurrence_in_context_keyword}", recepients_list, new_target_properties_details)
 
 
 def unmask_database_items(file_purpose_keyword):

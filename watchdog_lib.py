@@ -603,7 +603,7 @@ def main_execution_flow(
     write_content_to_output_files(f'{file_purpose_keyword}', all_target_properties_details)   
 
     # Send email if new properties have been detected
-    # send_email(f"{mail_purpose_occurrence_in_context_keyword}", recepients_list, new_target_properties_details)
+    send_email(f"{mail_purpose_occurrence_in_context_keyword}", recepients_list, new_target_properties_details)
 
 
 def unmask_database_items(file_purpose_keyword):

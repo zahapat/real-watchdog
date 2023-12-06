@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+from time import time
 from queue import Queue
 from os import environ, path, listdir, mkdir
 from threading import Thread
@@ -541,8 +542,10 @@ def find_new_and_update_all_properties_from_websites(
     ))
     threads_page[-1].start()
 
+    # Main loop for properties search
+    timer_start = time()
+    max_timer = 60
     while advertisements_done[int(cpu_id)] == 0:
-        # print(f"Core: {int(cpu_id)}, pages {min_scan_pages}-{max_scan_pages}")
         for page in range(min_scan_pages, max_scan_pages):
             threads_page.append(Thread(
                 target=search_in_page, 
@@ -562,9 +565,15 @@ def find_new_and_update_all_properties_from_websites(
         min_scan_pages = min_scan_pages + threads_count
         max_scan_pages = max_scan_pages + threads_count
 
+        current_time = time() - timer_start
+        print(f"PY: Timer cpu_id {cpu_id} = {current_time}")
         if advertisements_done[cpu_id] == 1:
             print(f"PY: Reached the last page. Break.")
             break
+        elif current_time > max_timer:
+            print(f"PY: Maximum timer value reached. Break.")
+            break
+
 
     threads_page = []
     advertisements_done[cpu_id] = 0

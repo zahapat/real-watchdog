@@ -55,4 +55,4 @@ jobs:
 
             - name: Run Python Script via Powershell
               shell: pwsh
-              run: python watchdog_repoert.py
+              run: python watchdog_report.py

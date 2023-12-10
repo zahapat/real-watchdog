@@ -9,21 +9,29 @@ from watchdog_lib import unmask_database_items, \
                          recepients_list
 
 
+def report(purpose, purpose_context):
+    all_target_properties_details = unmask_database_items(purpose)
+    check_for_active_urls_threaded(all_target_properties_details, 0)
+    write_content_to_output_files(purpose, all_target_properties_details, directory=f"temp_{purpose}")
+    send_report_email(purpose, purpose_context, recepients_list)
+    remove_dir(f"{path.dirname(path.realpath(__file__))}\\temp_{purpose}")
+
+
 def main():
 
-    # Properties for sale
-    all_target_properties_details = unmask_database_items("prodej")
-    check_for_active_urls_threaded(all_target_properties_details, 0)
-    write_content_to_output_files("prodej", all_target_properties_details, directory="temp")
-    send_report_email("prodej", "k prodeji", recepients_list)
-    remove_dir(f"{path.dirname(path.realpath(__file__))}\\temp")
+    parallel_processes = []
 
-    # Properties for rent
-    all_target_properties_details = unmask_database_items("pronajem")
-    check_for_active_urls_threaded(all_target_properties_details, 0)
-    write_content_to_output_files("pronajem", all_target_properties_details, directory="temp")
-    send_report_email("pronajem", "k pronájmu", recepients_list)
-    remove_dir(f"{path.dirname(path.realpath(__file__))}\\temp")
+    # Run Parallel Job: Properties for sale (Parallel Core 0)
+    parallel_processes.append(Process( target=report,
+        args=("prodej", "k prodeji",)
+    ))
+    [parallel_processes[i].start() for i in range(len(parallel_processes))]
+
+    # Run Parallel Job: Properties for rent (Main Core 0)
+    report("pronajem", "k pronájmu")
+
+    # Join Parallel Jobs
+    [parallel_processes[i].join() for i in range(len(parallel_processes))]
 
 
 if __name__ == '__main__':

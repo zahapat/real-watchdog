@@ -9,17 +9,16 @@ def main():
     threads_count = 5
     parallel_processes = []
 
-    # Properties for sale
+    # Run Parallel Job: Properties for sale (Parallel Core 0)
     parallel_processes.append(Process( target=watchdog_lib.main_execution_flow,
         args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.cpu_ids[0],)
     ))
-
-    # Properties for rent
-    parallel_processes.append(Process( target=watchdog_lib.main_execution_flow,
-        args=(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.cpu_ids[1],)
-    ))
-
     [parallel_processes[i].start() for i in range(len(parallel_processes))]
+
+    # Run Parallel Job: Properties for rent (Main Core 1)
+    watchdog_lib.main_execution_flow(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.cpu_ids[1])
+
+    # Join Parallel Jobs
     [parallel_processes[i].join() for i in range(len(parallel_processes))]
 
 

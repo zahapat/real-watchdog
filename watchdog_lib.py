@@ -159,7 +159,7 @@ def send_report_email(purpose, purpose_context, to_recepients_list):
     )
     msg.attach(MIMEText(body1))
 
-    files_path = f"{path.dirname(path.realpath(__file__))}\\temp"
+    files_path = f"{path.dirname(path.realpath(__file__))}\\temp_{purpose}"
     files = [f for f in listdir(files_path) if path.isfile(path.join(files_path, f))]
 
     for file in files:

@@ -1,8 +1,11 @@
 import requests
 import pandas as pd
+import platform
+import multiprocessing
+import psutil
 from time import time
 from queue import Queue
-from os import environ, path, listdir, mkdir
+from os import environ, path, listdir, mkdir, cpu_count, getpid
 from threading import Thread
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
@@ -13,6 +16,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from sys import stdin, stdout
+
+
 
 # Configure the environment to support accented characters
 stdin.reconfigure(encoding='utf-8-sig')
@@ -72,6 +77,38 @@ cpu_ids = [i for i in range(cpu_cores)]
 advertisements_done = [0 for i in range(cpu_cores)]
 
 
+# Get information about CPU
+def get_cpu_info():
+    print(f'PY: platform.processor() = {platform.processor()}')
+    print(f'PY: platform.machine() = {platform.machine()}')
+    print(f'PY: platform.architecture() = {platform.architecture()}')
+    print(f'PY: platform.python_version_tuple() = {platform.python_version_tuple()}')
+    print(f'PY: multiprocessing.cpu_count() = {multiprocessing.cpu_count()}')
+    print(f'PY: os.cpu_count() = {cpu_count()}')
+    print(f'PY: psutil.cpu_count() = {psutil.cpu_count()}')
+    print(f'PY: psutil.cpu_percent(percpu=True) = {psutil.cpu_percent(percpu=True)}')
+    # https://psutil.readthedocs.io/en/latest/index.html#psutil.Process.cpu_affinity
+    print(f'PY: getpid() = {getpid()}')
+    print(f'PY: psutil.Process(getpid(getpid())).cpu_affinity() = {psutil.Process(getpid()).cpu_affinity()}')
+
+# Find the respective cores with least usage to assign processes to these cores later
+def get_cpus_with_least_usage(number_of_cpus=None):
+    cores_percentages = psutil.cpu_percent(percpu=True)
+    cores_ids = [x for x in range(len(cores_percentages))]
+    zipped_cores_percentages_and_ids = sorted(zip(cores_ids, cores_percentages),
+                                                key= lambda zipped_item : zipped_item[1], 
+                                                reverse=False)
+    if number_of_cpus == None:
+        print(f'PY: All cores sorted from the lowest utilization percentage (core_id, utilization): {zipped_cores_percentages_and_ids}')
+        return zipped_cores_percentages_and_ids
+    else:
+        print(f'PY: All cores sorted from the lowest utilization percentage (core_id, utilization): {zipped_cores_percentages_and_ids[:number_of_cpus]}')
+        return zipped_cores_percentages_and_ids[:number_of_cpus]
+
+
+
+
+
 
 # Create directory if noexist
 def create_dir_if_noexist(path_to_dir):
@@ -79,11 +116,13 @@ def create_dir_if_noexist(path_to_dir):
         mkdir(f"{path_to_dir}")
         print(f"PY: Created {path_to_dir}")
 
+
 # Remove directory if exist
 def remove_dir(path):
     import shutil
     shutil.rmtree(f"{path}")
     print(f"PY: Removed {path}")
+
 
 # Send an email
 def send_email(purpose, to_recepients_list, new_target_properties_details):
@@ -231,7 +270,6 @@ def get_data_from_file(file_name, directory="database"):
     return target_properties_details
 
 
-
 # Function to search for the pattern in a web page
 def get_details(url, advertised_property_details, new_target_properties_details_queue):
 
@@ -285,7 +323,6 @@ def get_details(url, advertised_property_details, new_target_properties_details_
 
     except ValueError as e:
         print(f"Error while processing {url}: {e}")
-
 
 
 # Function to search for the pattern in a web page
@@ -394,7 +431,6 @@ def check_if_active_property_thread(all_target_property_detail, all_target_prope
     all_target_properties_detail_queue.put(all_target_property_detail.copy())
 
 
-
 def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask):
     # global all_target_properties_details
     print(f"PY: Checking for active URLs...")
@@ -440,7 +476,6 @@ def sort_list_by_date(all_target_properties_details):
     print(f"PY: Sorting list by time added DONE.")
 
     return all_target_properties_details
-
 
 
 # Write the content to the respective output files
@@ -517,7 +552,6 @@ def append_all_new_properties(new_target_properties_details_queue, all_target_pr
 
     print("PY: Update all target properties database list DONE.")
     return all_target_properties_details, new_target_properties_details
-
 
 
 def find_new_and_update_all_properties_from_websites(

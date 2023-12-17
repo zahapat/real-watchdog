@@ -25,6 +25,9 @@ def main():
 if __name__ == '__main__':
     cpu_time_start = process_time()
     wall_time_start = time()
+    watchdog_lib.get_cpu_info()
+    all_least_utilized_cores_sorted = watchdog_lib.get_cpus_with_least_usage()
+    two_least_utilized_cores_sorted = watchdog_lib.get_cpus_with_least_usage(2)
     main()
     elapsed_cpu_time = process_time() - cpu_time_start
     elapsed_wall_time = time() - wall_time_start

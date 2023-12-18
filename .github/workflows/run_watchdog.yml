@@ -31,7 +31,7 @@ jobs:
     run_python_via_powershell:
         runs-on: ${{ matrix.os }}
         strategy:
-            max-parallel: 1
+            # max-parallel: 1
             matrix:
                 os: [windows-latest]
                 python-version: ['3.11']

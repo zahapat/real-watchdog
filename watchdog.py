@@ -15,23 +15,23 @@ def main(asynchronous=False):
         # Run Parallel Job: Properties for sale (Child Process 0)
         parallel_processes.append(Process( 
             target=watchdog_lib.main_execution_flow_async,
-            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.process_ids[0], watchdog_lib.cpu_affinity[0],)
+            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.process_ids[1], watchdog_lib.cpu_affinity[1],)
         ))
         [parallel_processes[i].start() for i in range(len(parallel_processes))]
 
         # Run Parallel Job: Properties for rent (Main Process 1)
-        watchdog_lib.main_execution_flow_async(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.process_ids[1], cpu_affinity=watchdog_lib.cpu_affinity[1])
+        watchdog_lib.main_execution_flow_async(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.process_ids[0], cpu_affinity=watchdog_lib.cpu_affinity[0])
     else:
         print(f'PY: Running using the requests library')
         # Run Parallel Job: Properties for sale (Child Process 0)
         parallel_processes.append(Process( 
             target=watchdog_lib.main_execution_flow,
-            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.process_ids[0], watchdog_lib.cpu_affinity[0],)
+            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.process_ids[1], watchdog_lib.cpu_affinity[1],)
         ))
         [parallel_processes[i].start() for i in range(len(parallel_processes))]
 
         # Run Parallel Job: Properties for rent (Main Process 1)
-        watchdog_lib.main_execution_flow(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.process_ids[1], cpu_affinity=watchdog_lib.cpu_affinity[1])
+        watchdog_lib.main_execution_flow(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.process_ids[0], cpu_affinity=watchdog_lib.cpu_affinity[0])
 
     # Join Parallel Jobs
     [parallel_processes[i].join() for i in range(len(parallel_processes))]

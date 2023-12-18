@@ -862,7 +862,7 @@ async def find_new_and_update_all_properties_from_websites_async(
 def main_execution_flow(
         file_purpose_keyword, mail_purpose_occurrence_in_context_keyword, website_substring, search_threads_count, process_id, cpu_affinity=None):
 
-    # This process is supposed to be executed on a separate core defined by cpu_id. Check affinity, assign the process to this core altering the affinity.
+    # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
         this_process = psutil.Process()
         print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
@@ -898,7 +898,7 @@ def main_execution_flow(
 def main_execution_flow_async(
         file_purpose_keyword, mail_purpose_occurrence_in_context_keyword, website_substring, search_threads_count, process_id, cpu_affinity=None):
 
-    # This process is supposed to be executed on a separate core defined by cpu_id. Check affinity, assign the process to this core altering the affinity.
+    # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
         this_process = psutil.Process()
         print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')

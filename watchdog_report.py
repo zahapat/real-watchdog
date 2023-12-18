@@ -16,7 +16,7 @@ from watchdog_lib import unmask_database_items, \
 
 def report(purpose, purpose_context, process_id, cpu_affinity=None, asynchronous=False):
 
-    # This process is supposed to be executed on a separate core defined by cpu_id. Check affinity, assign the process to this core altering the affinity.
+    # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
         this_process = psutil.Process()
         print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
@@ -37,14 +37,14 @@ def main():
 
     parallel_processes = []
 
-    # Run Parallel Job: Properties for sale (Parallel Core 0)
+    # Run Parallel Job: Properties for sale (Child Process 0)
     parallel_processes.append(Process( 
         target=report,
         args=("prodej", "k prodeji", process_ids[0], cpu_affinity[0], True,)
     ))
     [parallel_processes[i].start() for i in range(len(parallel_processes))]
 
-    # Run Parallel Job: Properties for rent (Main Core 0)
+    # Run Parallel Job: Properties for rent (Main Process 0)
     report("pronajem", "k pronájmu", process_ids[1], cpu_affinity[1], asynchronous=True)
 
     # Join Parallel Jobs

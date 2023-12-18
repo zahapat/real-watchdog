@@ -74,11 +74,6 @@ search_details = [
     "plastová okna"
 ]
 
-cpu_cores = 2
-cpu_ids = [i for i in range(cpu_cores)]
-advertisements_done = [0 for i in range(cpu_cores)]
-
-
 # Get information about CPU
 def get_cpu_info():
     print(f'PY: platform.processor() = {platform.processor()}')
@@ -104,12 +99,16 @@ def get_cpus_with_least_usage(number_of_cpus=None):
         print(f'PY: All cores sorted from the lowest utilization percentage (core_id, utilization): {zipped_cores_percentages_and_ids}')
         return zipped_cores_percentages_and_ids
     else:
-        print(f'PY: All cores sorted from the lowest utilization percentage (core_id, utilization): {zipped_cores_percentages_and_ids[:number_of_cpus]}')
+        print(f'PY: {number_of_cpus} cores sorted from the lowest utilization percentage (core_id, utilization): {zipped_cores_percentages_and_ids[:number_of_cpus]}')
         return zipped_cores_percentages_and_ids[:number_of_cpus]
 
 
-
-
+cpu_cores = 2
+process_ids = [i for i in range(cpu_cores)]
+cpu_affinity = get_cpus_with_least_usage(cpu_cores)
+cpu_affinity = [[i for i, j in cpu_affinity],
+                [j for i, j in cpu_affinity]][0]
+advertisements_done = [0 for i in range(cpu_cores)]
 
 
 # Create directory if noexist
@@ -185,7 +184,7 @@ def send_email(purpose, to_recepients_list, new_target_properties_details):
 
 
 def send_report_email(purpose, purpose_context, to_recepients_list):
-    
+
     subject = 'Watchdog: report položek '+purpose_context+' ke dni '\
         +str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y"))
 
@@ -330,7 +329,7 @@ def get_details(url, advertised_property_details, new_target_properties_details_
 
 
 # Function to search for the pattern in a web page
-def search_in_page(url, all_target_properties_details, new_target_properties_details_queue, cpu_id):
+def search_in_page(url, all_target_properties_details, new_target_properties_details_queue, process_id):
     global advertisements_done
     try:
         # A set to keep track of visited URLs to avoid infinite loops
@@ -399,9 +398,9 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
 
         # Returns 1 if on the last page, else 0 to proceed to the next page
         if advertisements == 0: 
-            advertisements_done[cpu_id] = 1
+            advertisements_done[process_id] = 1
             return 1
-        advertisements_done[cpu_id] = 0
+        advertisements_done[process_id] = 0
         return 0
 
     except ValueError as e:
@@ -409,7 +408,7 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
 
 
 
-async def search_in_page_async(url, all_target_properties_details, new_target_properties_details_queue, cpu_id, client):
+async def search_in_page_async(url, all_target_properties_details, new_target_properties_details_queue, process_id, client):
     global advertisements_done
     try:
         # A set to keep track of visited URLs to avoid infinite loops
@@ -479,9 +478,9 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
 
         # Returns 1 if on the last page, else 0 to proceed to the next page
         if advertisements == 0: 
-            advertisements_done[cpu_id] = 1
+            advertisements_done[process_id] = 1
             return 1
-        advertisements_done[cpu_id] = 0
+        advertisements_done[process_id] = 0
         return 0
 
     except ValueError as e:
@@ -569,7 +568,7 @@ def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask
 
         threads_all_target_properties_details_indices_len[i] = len(threads_all_target_properties_details_indices[i])
         threads_all_target_properties_details_len[i] = len(threads_all_target_properties_details[i])
-        [threads_all_target_properties_details[i][j].join() for j in range(threads_all_target_properties_details_indices_len[i])]
+        [threads_all_target_properties_details[i][j].join() for j in range(threads_all_target_properties_details_len[i])]
 
 
     # Update the values after running multiple threads based on the content in the queue
@@ -709,7 +708,7 @@ def append_all_new_properties(new_target_properties_details_queue, all_target_pr
 
 
 def find_new_and_update_all_properties_from_websites(
-        threads_count, all_target_properties_details, website_substring, cpu_id):
+        threads_count, all_target_properties_details, website_substring, process_id):
     
     # Start the search from the initial URL, loop until there is at least one advertisement
     print(f"PY: Getting data from website...")
@@ -725,15 +724,19 @@ def find_new_and_update_all_properties_from_websites(
             f"{website_url_root}{website_substring}{search_requirements}",
             all_target_properties_details,
             new_target_properties_details_queue,
-            cpu_id
+            process_id
         )
     ))
     threads_page[-1].start()
 
     # Main loop for properties search
     timer_start = time()
-    max_timer = 60
-    while advertisements_done[int(cpu_id)] == 0:
+    max_timer_break = 60
+    max_scan_pages_break = 350
+    while advertisements_done[int(process_id)] == 0:
+
+        # Start threads
+        print(f'PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} started. Timer: {time()-timer_start}')
         for page in range(min_scan_pages, max_scan_pages):
             threads_page.append(Thread(
                 target=search_in_page, 
@@ -741,7 +744,7 @@ def find_new_and_update_all_properties_from_websites(
                     f"{website_url_root}{website_substring}{page*20}/{search_requirements}",
                     all_target_properties_details,
                     new_target_properties_details_queue,
-                    cpu_id
+                    process_id
                 )
             ))
             threads_page[-1].start()
@@ -750,21 +753,26 @@ def find_new_and_update_all_properties_from_websites(
         threads_page_len = len(threads_page)
         [threads_page[i].join() for i in range (threads_page_len)]
 
-        min_scan_pages = min_scan_pages + threads_count
-        max_scan_pages = max_scan_pages + threads_count
+        current_time = time()-timer_start
+        print(f"PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} done. Timer: {current_time}")
 
-        current_time = time() - timer_start
-        print(f"PY: Timer cpu_id {cpu_id} = {current_time}")
-        if advertisements_done[cpu_id] == 1:
-            print(f"PY: Reached the last page. Break.")
+        if advertisements_done[process_id] == 1:
+            print(f"PY: Process {process_id}: Reached the last page. Break.")
             break
-        elif current_time > max_timer:
-            print(f"PY: Maximum timer value reached. Break.")
+        elif current_time > max_timer_break:
+            print(f"PY: Process {process_id}: Maximum timer value reached. Break.")
             break
+        elif max_scan_pages >= max_scan_pages_break:
+            print(f"PY: Process {process_id}: Maximum limit of pages to scan reached. Break.")
+            break
+            
+
+        min_scan_pages += threads_count
+        max_scan_pages += threads_count
 
 
     threads_page = []
-    advertisements_done[cpu_id] = 0
+    advertisements_done[process_id] = 0
     print(f"PY: Getting data from website DONE.")
 
     all_target_properties_details, new_target_properties_details = append_all_new_properties(
@@ -776,7 +784,7 @@ def find_new_and_update_all_properties_from_websites(
 
 
 async def find_new_and_update_all_properties_from_websites_async(
-        threads_count, all_target_properties_details, website_substring, cpu_id):
+        threads_count, all_target_properties_details, website_substring, process_id):
     
     # Start the search from the initial URL, loop until there is at least one advertisement
     print(f"PY: Getting data from website...")
@@ -793,7 +801,7 @@ async def find_new_and_update_all_properties_from_websites_async(
             f"{website_url_root}{website_substring}{search_requirements}",
             all_target_properties_details,
             new_target_properties_details_queue,
-            cpu_id
+            process_id
         )
     ))
     threads_page[-1].start()
@@ -801,17 +809,19 @@ async def find_new_and_update_all_properties_from_websites_async(
 
     # Main loop for properties search
     timer_start = time()
-    max_timer = 60
-    while advertisements_done[int(cpu_id)] == 0:
+    max_timer_break = 60
+    max_scan_pages_break = 350
+    while advertisements_done[int(process_id)] == 0:
         
         # Start async threads
+        print(f'PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} started. Timer: {time()-timer_start}')
         async with httpx.AsyncClient() as client:
             await asyncio.gather(
                 *[search_in_page_async(
                     f"{website_url_root}{website_substring}{page*20}/{search_requirements}",
                     all_target_properties_details,
                     new_target_properties_details_queue,
-                    cpu_id,
+                    process_id,
                     client)
                   for page in range(min_scan_pages, max_scan_pages)]
             )
@@ -820,21 +830,25 @@ async def find_new_and_update_all_properties_from_websites_async(
         if (threads_page_len := len(threads_page)) != 0:
             [threads_page[i].join() for i in range(threads_page_len)]
 
-        min_scan_pages = min_scan_pages + threads_count
-        max_scan_pages = max_scan_pages + threads_count
+        current_time = time()-timer_start
+        print(f"PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} done. Timer: {current_time}")
 
-        current_time = time() - timer_start
-        print(f"PY: Timer cpu_id {cpu_id} = {current_time}")
-        if advertisements_done[cpu_id] == 1:
-            print(f"PY: Reached the last page. Break.")
+        if advertisements_done[process_id] == 1:
+            print(f"PY: Process {process_id}: Reached the last page. Break.")
             break
-        elif current_time > max_timer:
-            print(f"PY: Maximum timer value reached. Break.")
+        elif current_time > max_timer_break:
+            print(f"PY: Process {process_id}: Maximum timer value reached. Break.")
             break
+        elif max_scan_pages >= max_scan_pages_break:
+            print(f"PY: Process {process_id}: Maximum limit of pages to scan reached. Break.")
+            break
+
+        min_scan_pages += threads_count
+        max_scan_pages += threads_count
 
 
     threads_page = []
-    advertisements_done[cpu_id] = 0
+    advertisements_done[process_id] = 0
     print(f"PY: Getting data from website DONE.")
 
     all_target_properties_details, new_target_properties_details = append_all_new_properties(
@@ -846,7 +860,14 @@ async def find_new_and_update_all_properties_from_websites_async(
 
 
 def main_execution_flow(
-        file_purpose_keyword, mail_purpose_occurrence_in_context_keyword, website_substring, search_threads_count, cpu_id):
+        file_purpose_keyword, mail_purpose_occurrence_in_context_keyword, website_substring, search_threads_count, process_id, cpu_affinity=None):
+
+    # This process is supposed to be executed on a separate core defined by cpu_id. Check affinity, assign the process to this core altering the affinity.
+    if cpu_affinity != None:
+        this_process = psutil.Process()
+        print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
+        this_process.cpu_affinity([cpu_affinity])
+        print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')
 
     # Create an array of output files if noexist and get data from them
     all_target_properties_details = [[] for i in search_dispositions_list]
@@ -861,7 +882,7 @@ def main_execution_flow(
         search_threads_count,
         all_target_properties_details, 
         f"{website_substring}",
-        cpu_id
+        process_id
     )
 
     # Sort newly added items by date
@@ -875,7 +896,14 @@ def main_execution_flow(
 
 
 def main_execution_flow_async(
-        file_purpose_keyword, mail_purpose_occurrence_in_context_keyword, website_substring, search_threads_count, cpu_id):
+        file_purpose_keyword, mail_purpose_occurrence_in_context_keyword, website_substring, search_threads_count, process_id, cpu_affinity=None):
+
+    # This process is supposed to be executed on a separate core defined by cpu_id. Check affinity, assign the process to this core altering the affinity.
+    if cpu_affinity != None:
+        this_process = psutil.Process()
+        print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
+        this_process.cpu_affinity([cpu_affinity])
+        print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')
 
     # Create an array of output files if noexist and get data from them
     all_target_properties_details = [[] for i in search_dispositions_list]
@@ -891,7 +919,7 @@ def main_execution_flow_async(
             search_threads_count,
             all_target_properties_details, 
             f"{website_substring}",
-            cpu_id)
+            process_id)
     )
 
     # Sort newly added items by date

@@ -6,22 +6,32 @@ import watchdog_lib
 def main(asynchronous=False):
 
     # Important: Minimum allowed value of the 'thread_count' variable is 2 in each process
-    threads_count = 5
+    threads_count = 10
     parallel_processes = []
 
-    # Run Parallel Job: Properties for sale (Parallel Core 0)
-    parallel_processes.append(Process( target=watchdog_lib.main_execution_flow,
-        args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.cpu_ids[0],)
-    ))
-    [parallel_processes[i].start() for i in range(len(parallel_processes))]
 
-    # Run Parallel Job: Properties for rent (Main Core 1)
     if asynchronous:
         print(f'PY: Running in asynchronous mode using the httpx library')
-        watchdog_lib.main_execution_flow_async(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.cpu_ids[1])
+        # Run Parallel Job: Properties for sale (Parallel Core 0)
+        parallel_processes.append(Process( 
+            target=watchdog_lib.main_execution_flow_async,
+            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.process_ids[0], watchdog_lib.cpu_affinity[0],)
+        ))
+        [parallel_processes[i].start() for i in range(len(parallel_processes))]
+
+        # Run Parallel Job: Properties for rent (Main Core 1)
+        watchdog_lib.main_execution_flow_async(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.process_ids[1], cpu_affinity=watchdog_lib.cpu_affinity[1])
     else:
         print(f'PY: Running using the requests library')
-        watchdog_lib.main_execution_flow(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.cpu_ids[1])
+        # Run Parallel Job: Properties for sale (Parallel Core 0)
+        parallel_processes.append(Process( 
+            target=watchdog_lib.main_execution_flow,
+            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.process_ids[0], watchdog_lib.cpu_affinity[0],)
+        ))
+        [parallel_processes[i].start() for i in range(len(parallel_processes))]
+
+        # Run Parallel Job: Properties for rent (Main Core 1)
+        watchdog_lib.main_execution_flow(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.process_ids[1], cpu_affinity=watchdog_lib.cpu_affinity[1])
 
     # Join Parallel Jobs
     [parallel_processes[i].join() for i in range(len(parallel_processes))]
@@ -35,7 +45,7 @@ if __name__ == '__main__':
     all_least_utilized_cores_sorted = watchdog_lib.get_cpus_with_least_usage()
     two_least_utilized_cores_sorted = watchdog_lib.get_cpus_with_least_usage(2)
 
-    main(asynchronous=False)
+    main(asynchronous=True)
 
     elapsed_cpu_time = process_time() - cpu_time_start
     elapsed_wall_time = time() - wall_time_start

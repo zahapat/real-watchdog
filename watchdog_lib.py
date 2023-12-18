@@ -3,6 +3,8 @@ import pandas as pd
 import platform
 import multiprocessing
 import psutil
+import httpx
+import asyncio
 from time import time
 from queue import Queue
 from os import environ, path, listdir, mkdir, cpu_count, getpid
@@ -170,7 +172,8 @@ def send_email(purpose, to_recepients_list, new_target_properties_details):
     with SMTP(smtp_server, smtp_port) as smtp:
         smtp.starttls()
         smtp.login(smtp_username, mail_app_password)
-        smtp.sendmail(from_addr=smtp_username, to_addrs=recepients_list, msg=msg.as_string())
+        for recepient in recepients_list:
+            smtp.sendmail(from_addr=smtp_username, to_addrs=recepient, msg=msg.as_string())
 
 
     # Reset the list content to empty list of lists
@@ -215,7 +218,8 @@ def send_report_email(purpose, purpose_context, to_recepients_list):
     with SMTP(smtp_server, smtp_port) as smtp:
         smtp.starttls()
         smtp.login(smtp_username, mail_app_password)
-        smtp.sendmail(from_addr=smtp_username, to_addrs=recepients_list, msg=msg.as_string())
+        for recepient in recepients_list:
+            smtp.sendmail(from_addr=smtp_username, to_addrs=recepient, msg=msg.as_string())
 
 
     print(f"PY: Email has been sent successfully.")
@@ -404,6 +408,87 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
         print(f"Error while processing {url}: {e}")
 
 
+
+async def search_in_page_async(url, all_target_properties_details, new_target_properties_details_queue, cpu_id, client):
+    global advertisements_done
+    try:
+        # A set to keep track of visited URLs to avoid infinite loops
+        advertised_property_details = [
+            'A',    # [0] 'A' = Active / 'X' = Inactive
+            0,      # [1] Date Added
+            str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y")),      # [2] Last Active
+            0,      # [3] URL
+            0,      # [4] Price
+            0,      # [5] ZIP
+            0,      # [6] City
+            0,      # [7] Disposition
+            0       # [8] Details
+        ]
+
+        response = await client.get(url)
+        if response.status_code == 200:
+            page_content = response.text
+
+            # Parse the page content using BeautifulSoup
+            soup = BeautifulSoup(page_content, "html.parser")
+
+            advertisements = 0
+            for div in soup.find_all("div", {"class": "inzeraty inzeratyflex"}):
+                advertisements = advertisements + 1
+                for line in div:
+                    line = str(line)
+                    if line.startswith("<div class=\"inzeratynadpis\">"):
+                        advertised_property_details[3] = line.replace("<div class=\"inzeratynadpis\"><a href=\"", "").split("\">",1)[0]
+
+                    elif line.startswith("<div class=\"inzeratycena\">"):
+                        advertised_property_details[4] = line.replace("<div class=\"inzeratycena\"><b>", "").replace("</b></div>", "").replace("Kč", "").replace(" ", "")
+
+                    elif line.startswith("<div class=\"inzeratylok\">"):
+                        area = line.replace("<div class=\"inzeratylok\">", "").replace("</div>", "").split("<br/>", 2)
+                        advertised_property_details[5] = area[1]
+                        advertised_property_details[6] = area[0]
+
+                        # Skip if not among desired cities
+                        for search_city_list in search_cities_list:
+                            if area[0] == search_city_list:
+                                # Check if URL not visited before
+                                visited = False
+
+                                # Using len() and indices is 15 seconds faster than for _ in _ method in the first for loop
+                                search_dispositions_list_len = len(search_dispositions_list)
+                                for i in range(search_dispositions_list_len):
+                                    for all_target_properties_detail in all_target_properties_details[i]:
+
+                                        # Use short-circuit evaluation and utilize the and operation to 'fail the condition faster'
+                                        if (all_target_properties_detail[0] == "A") \
+                                            and advertised_property_details[3] in mask_char_values_in_string(all_target_properties_detail[3], -mask):
+
+                                            # Mark as Active and set visited flag to True
+                                            print(f"PY: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}")
+                                            visited = True
+                                            break
+
+                                    if visited == True: 
+                                        break
+
+                                if visited == False:
+                                    get_details(
+                                        website_url_root+advertised_property_details[3], 
+                                        advertised_property_details,
+                                        new_target_properties_details_queue)
+
+        # Returns 1 if on the last page, else 0 to proceed to the next page
+        if advertisements == 0: 
+            advertisements_done[cpu_id] = 1
+            return 1
+        advertisements_done[cpu_id] = 0
+        return 0
+
+    except ValueError as e:
+        print(f"Error while processing {url}: {e}")
+
+
+
 def check_if_active_property_thread(all_target_property_detail, all_target_properties_detail_queue, this_mask):
     try:
         response = requests.get(url=mask_char_values_in_string(all_target_property_detail[3], -1*this_mask), headers=agent)
@@ -412,16 +497,16 @@ def check_if_active_property_thread(all_target_property_detail, all_target_prope
 
             # Parse the page content using BeautifulSoup
             soup = BeautifulSoup(page_content, "html.parser")
-
-            # Check if the date added matches the logged value, then it is still an active item
-            if "TOP" in str(soup.find_all("span", {"class": "velikost10"})[0]).replace("<span class=\"velikost10\">","").replace("</span>",""):
-                date_added = all_target_property_detail[1]
-            else:
-                date_added = str(soup.find_all("span", {"class": "velikost10"})[0]).replace("<span class=\"velikost10\">","").replace("</span>","").replace(" ", "").split('-[')[1].replace("]", "")
-            if datetime.strptime(date_added, "%d.%m.%Y").date().strftime("%d.%m.%Y") in all_target_property_detail[1]:
-                all_target_property_detail[0] = "A"
-                all_target_property_detail[2] = str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y")) # Override Last Active Time
-            else:
+            try:
+                # If the advertised property webside contains class 'nadpisdetail' header, then it is still active
+                if str(soup.find_all("h1", {"class": "nadpisdetail"})).replace("<h1 class=\"nadpisdetail\">","").replace("</h1>","") != str([]):
+                    all_target_property_detail[0] = "A"
+                    all_target_property_detail[2] = str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y")) # Override Last Active Time
+                else:
+                    # Do not update all_target_property_detail, report inactive
+                    print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}")
+            except:
+                # Do not update all_target_property_detail, report inactive
                 print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}")
 
     except ValueError as e:
@@ -431,6 +516,36 @@ def check_if_active_property_thread(all_target_property_detail, all_target_prope
     all_target_properties_detail_queue.put(all_target_property_detail.copy())
 
 
+
+async def check_if_active_property_thread_async(all_target_property_detail, all_target_properties_detail_queue, this_mask, client):
+    try:
+        response = await client.get(mask_char_values_in_string(all_target_property_detail[3], -1*this_mask))
+        # response = requests.get(url=mask_char_values_in_string(all_target_property_detail[3], -1*this_mask), headers=agent)
+        if response.status_code == 200:
+            page_content = response.text
+
+            # Parse the page content using BeautifulSoup
+            soup = BeautifulSoup(page_content, "html.parser")
+            try:
+                # If the advertised property webside contains class 'nadpisdetail' header, then it is still active
+                if str(soup.find_all("h1", {"class": "nadpisdetail"})).replace("<h1 class=\"nadpisdetail\">","").replace("</h1>","") != str([]):
+                    all_target_property_detail[0] = "A"
+                    all_target_property_detail[2] = str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y")) # Override Last Active Time
+                else:
+                    # Do not update all_target_property_detail, report inactive
+                    print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}")
+            except:
+                # Do not update all_target_property_detail, report inactive
+                print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}")
+
+    except ValueError as e:
+        print(f"PY: check_if_active_property_thread: Error while processing: {all_target_property_detail[3]}: {e}")
+        print(f"PY: check_if_active_property_thread: DEBUG: all_target_property_detail = {all_target_property_detail}")
+
+    all_target_properties_detail_queue.put(all_target_property_detail.copy())
+
+
+
 def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask):
     # global all_target_properties_details
     print(f"PY: Checking for active URLs...")
@@ -438,6 +553,7 @@ def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask
     threads_all_target_properties_details_len =[[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_queue = [[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_indices = [[] for i in range(len(all_target_properties_details))]
+    threads_all_target_properties_details_indices_len = [[] for i in range(len(all_target_properties_details))]
 
     for i, all_target_properties_detail in enumerate(all_target_properties_details):
         for pos, all_target_property_detail in enumerate(all_target_properties_detail):
@@ -448,23 +564,61 @@ def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask
                 threads_all_target_properties_details[i].append(Thread(
                     target=check_if_active_property_thread, 
                     args=(all_target_property_detail,
-                          threads_all_target_properties_details_queue[i][-1],
-                          this_mask,)
-                ))
+                          threads_all_target_properties_details_queue[i][-1],this_mask,)))
                 threads_all_target_properties_details[i][-1].start()
 
+        threads_all_target_properties_details_indices_len[i] = len(threads_all_target_properties_details_indices[i])
         threads_all_target_properties_details_len[i] = len(threads_all_target_properties_details[i])
-        [threads_all_target_properties_details[i][j].join() for j in range(threads_all_target_properties_details_len[i])]
+        [threads_all_target_properties_details[i][j].join() for j in range(threads_all_target_properties_details_indices_len[i])]
 
 
     # Update the values after running multiple threads based on the content in the queue
     for i, all_target_properties_detail in enumerate(all_target_properties_details):
-        for j in range(threads_all_target_properties_details_len[i]):
+        for j in range(threads_all_target_properties_details_indices_len[i]):
             all_target_properties_detail[threads_all_target_properties_details_indices[i][j]] = threads_all_target_properties_details_queue[i][j].get()
 
         
     print(f"PY: Checking for active URL DONE.")
     return all_target_properties_details
+
+
+
+async def check_for_active_urls_threaded_async(all_target_properties_details, this_mask=mask):
+    # global all_target_properties_details
+    print(f"PY: Checking for active URLs...")
+    threads_all_target_properties_details_queue = [[] for i in range(len(all_target_properties_details))]
+    threads_all_target_properties_details_indices = [[] for i in range(len(all_target_properties_details))]
+    threads_all_target_properties_details_indices_len = [[] for i in range(len(all_target_properties_details))]
+
+    for i, all_target_properties_detail in enumerate(all_target_properties_details):
+        for position_in_database, all_target_property_detail in enumerate(all_target_properties_detail):
+            # Skip whether or not the item is active if it has been inactive for two days, otherwise check newer/active ones
+            if datetime.strptime(all_target_property_detail[2], "%d.%m.%Y") >= (datetime.today() - timedelta(days=2)):
+                threads_all_target_properties_details_indices[i].append(position_in_database)
+                threads_all_target_properties_details_queue[i].append(Queue())
+
+        async with httpx.AsyncClient() as client:
+            await asyncio.gather(
+                *[check_if_active_property_thread_async(
+                    all_target_properties_detail[position_in_database],
+                    threads_all_target_properties_details_queue[i][item_in_list],
+                    this_mask,
+                    client)
+                  for item_in_list, position_in_database in enumerate(threads_all_target_properties_details_indices[i])]
+            )
+        threads_all_target_properties_details_indices_len[i] = len(threads_all_target_properties_details_indices[i])
+
+
+    # Update the values after running multiple threads based on the content in the queue
+    for i, all_target_properties_detail in enumerate(all_target_properties_details):
+        for j in range(threads_all_target_properties_details_indices_len[i]):
+            threads_all_target_properties_details_indices[i]
+            all_target_properties_detail[threads_all_target_properties_details_indices[i][j]] = threads_all_target_properties_details_queue[i][j].get()
+
+        
+    print(f"PY: Checking for active URL DONE.")
+    return all_target_properties_details
+
 
 
 # Sort the databases from the newest to the oldest added item
@@ -620,6 +774,77 @@ def find_new_and_update_all_properties_from_websites(
     return all_target_properties_details, new_target_properties_details
 
 
+
+async def find_new_and_update_all_properties_from_websites_async(
+        threads_count, all_target_properties_details, website_substring, cpu_id):
+    
+    # Start the search from the initial URL, loop until there is at least one advertisement
+    print(f"PY: Getting data from website...")
+    global advertisements_done
+    threads_page = []
+    threads_page_async = []
+    new_target_properties_details_queue = Queue()
+    min_scan_pages = 1
+    max_scan_pages = threads_count
+
+    threads_page.append(Thread(
+        target=search_in_page,
+        args=(
+            f"{website_url_root}{website_substring}{search_requirements}",
+            all_target_properties_details,
+            new_target_properties_details_queue,
+            cpu_id
+        )
+    ))
+    threads_page[-1].start()
+    
+
+    # Main loop for properties search
+    timer_start = time()
+    max_timer = 60
+    while advertisements_done[int(cpu_id)] == 0:
+        
+        # Start async threads
+        async with httpx.AsyncClient() as client:
+            await asyncio.gather(
+                *[search_in_page_async(
+                    f"{website_url_root}{website_substring}{page*20}/{search_requirements}",
+                    all_target_properties_details,
+                    new_target_properties_details_queue,
+                    cpu_id,
+                    client)
+                  for page in range(min_scan_pages, max_scan_pages)]
+            )
+
+        # Wait for threads to complete tasks
+        if (threads_page_len := len(threads_page)) != 0:
+            [threads_page[i].join() for i in range(threads_page_len)]
+
+        min_scan_pages = min_scan_pages + threads_count
+        max_scan_pages = max_scan_pages + threads_count
+
+        current_time = time() - timer_start
+        print(f"PY: Timer cpu_id {cpu_id} = {current_time}")
+        if advertisements_done[cpu_id] == 1:
+            print(f"PY: Reached the last page. Break.")
+            break
+        elif current_time > max_timer:
+            print(f"PY: Maximum timer value reached. Break.")
+            break
+
+
+    threads_page = []
+    advertisements_done[cpu_id] = 0
+    print(f"PY: Getting data from website DONE.")
+
+    all_target_properties_details, new_target_properties_details = append_all_new_properties(
+        new_target_properties_details_queue, 
+        all_target_properties_details)
+
+    return all_target_properties_details, new_target_properties_details
+
+
+
 def main_execution_flow(
         file_purpose_keyword, mail_purpose_occurrence_in_context_keyword, website_substring, search_threads_count, cpu_id):
 
@@ -637,6 +862,36 @@ def main_execution_flow(
         all_target_properties_details, 
         f"{website_substring}",
         cpu_id
+    )
+
+    # Sort newly added items by date
+    all_target_properties_details = sort_list_by_date(all_target_properties_details)
+
+    # Update output CSV database files
+    write_content_to_output_files(f'{file_purpose_keyword}', all_target_properties_details)   
+
+    # Send email if new properties have been detected
+    send_email(f"{mail_purpose_occurrence_in_context_keyword}", recepients_list, new_target_properties_details)
+
+
+def main_execution_flow_async(
+        file_purpose_keyword, mail_purpose_occurrence_in_context_keyword, website_substring, search_threads_count, cpu_id):
+
+    # Create an array of output files if noexist and get data from them
+    all_target_properties_details = [[] for i in search_dispositions_list]
+    for i, search_disposition in enumerate(search_dispositions_list):
+        all_target_properties_details[i] = get_data_from_file(f'{file_purpose_keyword}_{search_disposition[0]}.csv')
+
+    # Check if logged URLs are still active (Launch asynchronous thread)
+    all_target_properties_details = asyncio.run(check_for_active_urls_threaded_async(all_target_properties_details))
+
+    # Start the search from the initial URL, loop until there is at least one advertisement
+    all_target_properties_details, new_target_properties_details = asyncio.run(
+        find_new_and_update_all_properties_from_websites_async(
+            search_threads_count,
+            all_target_properties_details, 
+            f"{website_substring}",
+            cpu_id)
     )
 
     # Sort newly added items by date

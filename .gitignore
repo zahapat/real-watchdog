@@ -2,6 +2,9 @@
 secrets.sh
 note.txt
 
+# backup dir
+backup
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

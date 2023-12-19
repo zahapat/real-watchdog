@@ -1,6 +1,10 @@
-from multiprocessing import Process
 from time import process_time, gmtime, time, strftime
-import watchdog_lib
+from watchdog_lib import main_execution_flow, \
+                         main_execution_flow_async, \
+                         get_cpu_info, \
+                         get_cpus_with_least_usage, \
+                         process_ids, \
+                         cpu_affinity
 
 
 def main(asynchronous=False):
@@ -13,25 +17,27 @@ def main(asynchronous=False):
     if asynchronous:
         print(f'PY: Running in asynchronous mode using the httpx library')
         # Run Parallel Job: Properties for sale (Child Process 0)
-        parallel_processes.append(Process( 
-            target=watchdog_lib.main_execution_flow_async,
-            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.process_ids[1], watchdog_lib.cpu_affinity[1],)
+        from multiprocessing import Process as mp_Process
+        parallel_processes.append(mp_Process( 
+            target=main_execution_flow_async,
+            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, process_ids[1], cpu_affinity[1],)
         ))
         [parallel_processes[i].start() for i in range(len(parallel_processes))]
 
         # Run Parallel Job: Properties for rent (Main Process 1)
-        watchdog_lib.main_execution_flow_async(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.process_ids[0], cpu_affinity=watchdog_lib.cpu_affinity[0])
+        main_execution_flow_async(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, process_ids[0], cpu_affinity=cpu_affinity[0])
     else:
         print(f'PY: Running using the requests library')
         # Run Parallel Job: Properties for sale (Child Process 0)
-        parallel_processes.append(Process( 
-            target=watchdog_lib.main_execution_flow,
-            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, watchdog_lib.process_ids[1], watchdog_lib.cpu_affinity[1],)
+        from multiprocessing import Process as mp_Process
+        parallel_processes.append(mp_Process( 
+            target=main_execution_flow,
+            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, process_ids[1], cpu_affinity[1],)
         ))
         [parallel_processes[i].start() for i in range(len(parallel_processes))]
 
         # Run Parallel Job: Properties for rent (Main Process 1)
-        watchdog_lib.main_execution_flow(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, watchdog_lib.process_ids[0], cpu_affinity=watchdog_lib.cpu_affinity[0])
+        main_execution_flow(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, process_ids[0], cpu_affinity=cpu_affinity[0])
 
     # Join Parallel Jobs
     [parallel_processes[i].join() for i in range(len(parallel_processes))]
@@ -41,9 +47,8 @@ if __name__ == '__main__':
     cpu_time_start = process_time()
     wall_time_start = time()
 
-    watchdog_lib.get_cpu_info()
-    all_least_utilized_cores_sorted = watchdog_lib.get_cpus_with_least_usage()
-    two_least_utilized_cores_sorted = watchdog_lib.get_cpus_with_least_usage(2)
+    get_cpu_info()
+    two_least_utilized_cores_sorted = get_cpus_with_least_usage(2)
 
     main(asynchronous=True)
 

@@ -1,6 +1,6 @@
-import asyncio
-import psutil
-from multiprocessing import Process
+from asyncio import run
+from psutil import Process as psutil_Process
+from multiprocessing import Process as mp_Process
 from time import process_time, gmtime, time, strftime
 from os import path
 from watchdog_lib import unmask_database_items, \
@@ -18,14 +18,14 @@ def report(purpose, purpose_context, process_id, cpu_affinity=None, asynchronous
 
     # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
-        this_process = psutil.Process()
+        this_process = psutil_Process()
         print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
         this_process.cpu_affinity([cpu_affinity])
         print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')
 
     all_target_properties_details = unmask_database_items(purpose)
     if asynchronous:
-        asyncio.run(check_for_active_urls_threaded_async(all_target_properties_details, 0))
+        run(check_for_active_urls_threaded_async(all_target_properties_details, 0))
     else:
         check_for_active_urls_threaded(all_target_properties_details, 0)
     write_content_to_output_files(purpose, all_target_properties_details, directory=f"temp_{purpose}")
@@ -38,7 +38,7 @@ def main():
     parallel_processes = []
 
     # Run Parallel Job: Properties for sale (Child Process 0)
-    parallel_processes.append(Process( 
+    parallel_processes.append(mp_Process( 
         target=report,
         args=("prodej", "k prodeji", process_ids[0], cpu_affinity[0], True,)
     ))

@@ -1,10 +1,9 @@
-import requests
-import pandas as pd
-import platform
-import multiprocessing
-import psutil
-import httpx
-import asyncio
+from pandas import DataFrame, read_csv
+from requests import get as requests_get
+from platform import processor, machine, architecture, python_version_tuple
+from asyncio import run, gather
+from psutil import Process, cpu_percent
+from httpx import AsyncClient
 from time import time
 from queue import Queue
 from os import environ, path, listdir, mkdir, cpu_count, getpid
@@ -12,7 +11,7 @@ from threading import Thread
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from re import compile, findall
+from re import compile
 from smtplib import SMTP
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -76,21 +75,18 @@ search_details = [
 
 # Get information about CPU
 def get_cpu_info():
-    print(f'PY: platform.processor() = {platform.processor()}')
-    print(f'PY: platform.machine() = {platform.machine()}')
-    print(f'PY: platform.architecture() = {platform.architecture()}')
-    print(f'PY: platform.python_version_tuple() = {platform.python_version_tuple()}')
-    print(f'PY: multiprocessing.cpu_count() = {multiprocessing.cpu_count()}')
+    print(f'PY: platform.processor() = {processor()}')
+    print(f'PY: platform.machine() = {machine()}')
+    print(f'PY: platform.architecture() = {architecture()}')
+    print(f'PY: platform.python_version_tuple() = {python_version_tuple()}')
     print(f'PY: os.cpu_count() = {cpu_count()}')
-    print(f'PY: psutil.cpu_count() = {psutil.cpu_count()}')
-    print(f'PY: psutil.cpu_percent(percpu=True) = {psutil.cpu_percent(percpu=True)}')
-    # https://psutil.readthedocs.io/en/latest/index.html#psutil.Process.cpu_affinity
+    print(f'PY: psutil.cpu_percent(percpu=True) = {cpu_percent(percpu=True)}')
     print(f'PY: getpid() = {getpid()}')
-    print(f'PY: psutil.Process(getpid(getpid())).cpu_affinity() = {psutil.Process(getpid()).cpu_affinity()}')
+    print(f'PY: psutil.Process(getpid(getpid())).cpu_affinity() = {Process(getpid()).cpu_affinity()}')
 
 # Find the respective cores with least usage to assign processes to these cores later
 def get_cpus_with_least_usage(number_of_cpus=None):
-    cores_percentages = psutil.cpu_percent(percpu=True)
+    cores_percentages = cpu_percent(percpu=True)
     cores_ids = [x for x in range(len(cores_percentages))]
     zipped_cores_percentages_and_ids = sorted(zip(cores_ids, cores_percentages),
                                                 key= lambda zipped_item : zipped_item[1], 
@@ -245,7 +241,7 @@ def get_data_from_file(file_name, directory="database"):
         create_dir_if_noexist(f"{output_directory}\\{directory}")
         file_gen_fullpath = f"{output_directory}\\{directory}\\{file_name}"
 
-        target_properties_details = pd.read_csv(
+        target_properties_details = read_csv(
             file_gen_fullpath, 
             encoding="utf-8-sig",
             sep = ',', header=None,
@@ -278,7 +274,7 @@ def get_details(url, advertised_property_details, new_target_properties_details_
 
     try:
         searched_property_details = ""
-        response = requests.get(url=url, headers=agent)
+        response = requests_get(url=url, headers=agent)
         if response.status_code == 200:
             page_content = response.text
 
@@ -344,7 +340,7 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
             0,      # [7] Disposition
             0       # [8] Details
         ]
-        response = requests.get(url=url, headers=agent)
+        response = requests_get(url=url, headers=agent)
         if response.status_code == 200:
             page_content = response.text
 
@@ -490,7 +486,7 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
 
 def check_if_active_property_thread(all_target_property_detail, all_target_properties_detail_queue, this_mask):
     try:
-        response = requests.get(url=mask_char_values_in_string(all_target_property_detail[3], -1*this_mask), headers=agent)
+        response = requests_get(url=mask_char_values_in_string(all_target_property_detail[3], -1*this_mask), headers=agent)
         if response.status_code == 200:
             page_content = response.text
 
@@ -519,7 +515,6 @@ def check_if_active_property_thread(all_target_property_detail, all_target_prope
 async def check_if_active_property_thread_async(all_target_property_detail, all_target_properties_detail_queue, this_mask, client):
     try:
         response = await client.get(mask_char_values_in_string(all_target_property_detail[3], -1*this_mask))
-        # response = requests.get(url=mask_char_values_in_string(all_target_property_detail[3], -1*this_mask), headers=agent)
         if response.status_code == 200:
             page_content = response.text
 
@@ -596,8 +591,8 @@ async def check_for_active_urls_threaded_async(all_target_properties_details, th
                 threads_all_target_properties_details_indices[i].append(position_in_database)
                 threads_all_target_properties_details_queue[i].append(Queue())
 
-        async with httpx.AsyncClient() as client:
-            await asyncio.gather(
+        async with AsyncClient() as client:
+            await gather(
                 *[check_if_active_property_thread_async(
                     all_target_properties_detail[position_in_database],
                     threads_all_target_properties_details_queue[i][item_in_list],
@@ -643,7 +638,7 @@ def write_content_to_output_files(file_prefix, all_target_properties_details, di
         create_dir_if_noexist(f"{output_directory}\\{directory}")
         file_gen_fullpath = f"{output_directory}\\{directory}\\{file_gen_name}"
 
-        pd.DataFrame(all_target_properties_details[i]).to_csv(
+        DataFrame(all_target_properties_details[i]).to_csv(
             path_or_buf=file_gen_fullpath, 
             sep = ',', 
             header=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Details'], 
@@ -709,7 +704,7 @@ def append_all_new_properties(new_target_properties_details_queue, all_target_pr
 
 def find_new_and_update_all_properties_from_websites(
         threads_count, all_target_properties_details, website_substring, process_id):
-    
+
     # Start the search from the initial URL, loop until there is at least one advertisement
     print(f"PY: Getting data from website...")
     global advertisements_done
@@ -815,8 +810,8 @@ async def find_new_and_update_all_properties_from_websites_async(
         
         # Start async threads
         print(f'PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} started. Timer: {time()-timer_start}')
-        async with httpx.AsyncClient() as client:
-            await asyncio.gather(
+        async with AsyncClient() as client:
+            await gather(
                 *[search_in_page_async(
                     f"{website_url_root}{website_substring}{page*20}/{search_requirements}",
                     all_target_properties_details,
@@ -864,7 +859,7 @@ def main_execution_flow(
 
     # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
-        this_process = psutil.Process()
+        this_process = Process()
         print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
         this_process.cpu_affinity([cpu_affinity])
         print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')
@@ -900,7 +895,7 @@ def main_execution_flow_async(
 
     # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
-        this_process = psutil.Process()
+        this_process = Process()
         print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
         this_process.cpu_affinity([cpu_affinity])
         print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')
@@ -911,10 +906,10 @@ def main_execution_flow_async(
         all_target_properties_details[i] = get_data_from_file(f'{file_purpose_keyword}_{search_disposition[0]}.csv')
 
     # Check if logged URLs are still active (Launch asynchronous thread)
-    all_target_properties_details = asyncio.run(check_for_active_urls_threaded_async(all_target_properties_details))
+    all_target_properties_details = run(check_for_active_urls_threaded_async(all_target_properties_details))
 
     # Start the search from the initial URL, loop until there is at least one advertisement
-    all_target_properties_details, new_target_properties_details = asyncio.run(
+    all_target_properties_details, new_target_properties_details = run(
         find_new_and_update_all_properties_from_websites_async(
             search_threads_count,
             all_target_properties_details, 

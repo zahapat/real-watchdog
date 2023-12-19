@@ -2,7 +2,7 @@ from pandas import DataFrame, read_csv
 from requests import get as requests_get
 from platform import processor, machine, architecture, python_version_tuple
 from asyncio import run, gather
-from psutil import Process, cpu_percent
+from psutil import Process as psutil_Process, cpu_percent
 from httpx import AsyncClient
 from time import time
 from queue import Queue
@@ -85,7 +85,7 @@ def get_cpu_info():
     print(f'PY: os.cpu_count() = {cpu_count()}')
     print(f'PY: psutil.cpu_percent(percpu=True) = {cpu_percent(percpu=True)}')
     print(f'PY: getpid() = {getpid()}')
-    print(f'PY: psutil.Process(getpid(getpid())).cpu_affinity() = {Process(getpid()).cpu_affinity()}')
+    print(f'PY: psutil.Process(getpid(getpid())).cpu_affinity() = {psutil_Process(getpid()).cpu_affinity()}')
 
 # Find the respective cores with least usage to assign processes to these cores later
 def get_cpus_with_least_usage(number_of_cpus=None):
@@ -859,7 +859,7 @@ def main_execution_flow(
 
     # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
-        this_process = Process()
+        this_process = psutil_Process()
         print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
         this_process.cpu_affinity([cpu_affinity])
         print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')
@@ -895,7 +895,7 @@ def main_execution_flow_async(
 
     # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
-        this_process = Process()
+        this_process = psutil_Process()
         print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
         this_process.cpu_affinity([cpu_affinity])
         print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')

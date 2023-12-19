@@ -37,15 +37,16 @@ def main():
 
     parallel_processes = []
 
-    # Run Parallel Job: Properties for sale (Child Process 0)
+    # Run Parallel Job: Properties for sale (Child Process 1)
     parallel_processes.append(mp_Process( 
         target=report,
-        args=("prodej", "k prodeji", process_ids[0], cpu_affinity[0], True,)
+        args=("prodej", "k prodeji", process_ids[1], cpu_affinity[1], True,),
+        daemon=True # Non-blocking the parent process
     ))
     [parallel_processes[i].start() for i in range(len(parallel_processes))]
 
-    # Run Parallel Job: Properties for rent (Main Process 0)
-    report("pronajem", "k pronájmu", process_ids[1], cpu_affinity[1], asynchronous=True)
+    # Run Parallel Job: Properties for rent (Parent Process 0)
+    report("pronajem", "k pronájmu", process_ids[0], cpu_affinity[0], asynchronous=True)
 
     # Join Parallel Jobs
     [parallel_processes[i].join() for i in range(len(parallel_processes))]

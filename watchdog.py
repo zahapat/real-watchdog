@@ -20,11 +20,12 @@ def main(asynchronous=False):
         from multiprocessing import Process as mp_Process
         parallel_processes.append(mp_Process( 
             target=main_execution_flow_async,
-            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, process_ids[1], cpu_affinity[1],)
+            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, process_ids[1], cpu_affinity[1],),
+            daemon=True # Non-blocking the parent process
         ))
         [parallel_processes[i].start() for i in range(len(parallel_processes))]
 
-        # Run Parallel Job: Properties for rent (Main Process 1)
+        # Run Parallel Job: Properties for rent (Parent Process 1)
         main_execution_flow_async(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, process_ids[0], cpu_affinity=cpu_affinity[0])
     else:
         print(f'PY: Running using the requests library')
@@ -32,11 +33,12 @@ def main(asynchronous=False):
         from multiprocessing import Process as mp_Process
         parallel_processes.append(mp_Process( 
             target=main_execution_flow,
-            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, process_ids[1], cpu_affinity[1],)
+            args=(f"prodej", f"k prodeji", f"/prodam/byt/", threads_count, process_ids[1], cpu_affinity[1],),
+            daemon=True # Non-blocking the parent process
         ))
         [parallel_processes[i].start() for i in range(len(parallel_processes))]
 
-        # Run Parallel Job: Properties for rent (Main Process 1)
+        # Run Parallel Job: Properties for rent (Parent Process 1)
         main_execution_flow(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, process_ids[0], cpu_affinity=cpu_affinity[0])
 
     # Join Parallel Jobs

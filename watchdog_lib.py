@@ -24,6 +24,9 @@ from sys import stdin, stdout
 stdin.reconfigure(encoding='utf-8-sig')
 stdout.reconfigure(encoding='utf-8-sig')
 
+# Configure the environment to flush data on IO buffer
+stdout.flush()
+
 # Set browser ID
 agent = {
     'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.6045.160 Safari/537.36'

@@ -727,11 +727,10 @@ def find_new_and_update_all_properties_from_websites(
     # Main loop for properties search
     timer_start = time()
     max_timer_break = 60
-    max_scan_pages_break = 350
+    max_scan_pages_break = 200
     while advertisements_done[int(process_id)] == 0:
 
         # Start threads
-        print(f'PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} started. Timer: {time()-timer_start}')
         for page in range(min_scan_pages, max_scan_pages):
             threads_page.append(Thread(
                 target=search_in_page, 
@@ -785,7 +784,6 @@ async def find_new_and_update_all_properties_from_websites_async(
     print(f"PY: Getting data from website...")
     global advertisements_done
     threads_page = []
-    threads_page_async = []
     new_target_properties_details_queue = Queue()
     min_scan_pages = 1
     max_scan_pages = threads_count
@@ -805,11 +803,10 @@ async def find_new_and_update_all_properties_from_websites_async(
     # Main loop for properties search
     timer_start = time()
     max_timer_break = 60
-    max_scan_pages_break = 350
+    max_scan_pages_break = 200
     while advertisements_done[int(process_id)] == 0:
-        
+
         # Start async threads
-        print(f'PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} started. Timer: {time()-timer_start}')
         async with AsyncClient() as client:
             await gather(
                 *[search_in_page_async(

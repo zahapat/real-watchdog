@@ -1,5 +1,6 @@
 requests==2.31.0
 polars==0.20.1
+tzdata==2023.3
 beautifulsoup4==4.12.2
 psutil==5.9.5
 httpx==0.25.2

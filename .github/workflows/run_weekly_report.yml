@@ -47,7 +47,7 @@ jobs:
               id: cache
               with:
                 path: ${{ env.pythonLocation }}
-                key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-test1
+                key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-run_weekly_report
 
             - name: Install Dependencies
               if: steps.cache.outputs.cache-hit != 'true'

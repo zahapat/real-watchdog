@@ -1,4 +1,5 @@
-from pandas import DataFrame, read_csv
+# from pandas import DataFrame, read_csv
+from polars import DataFrame, Utf8, read_csv, col
 from requests import get as requests_get
 from platform import processor, machine, architecture, python_version_tuple
 from asyncio import run, gather
@@ -16,16 +17,13 @@ from smtplib import SMTP
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from sys import stdin, stdout
+from sys import stdin, stdout, exit
 
 
 
 # Configure the environment to support accented characters
 stdin.reconfigure(encoding='utf-8-sig')
 stdout.reconfigure(encoding='utf-8-sig')
-
-# Configure the environment to flush data on IO buffer
-stdout.flush()
 
 # Set browser ID
 agent = {
@@ -243,32 +241,36 @@ def get_data_from_file(file_name, directory="database"):
         output_directory = path.dirname(path.realpath(__file__))
         create_dir_if_noexist(f"{output_directory}\\{directory}")
         file_gen_fullpath = f"{output_directory}\\{directory}\\{file_name}"
+        print(file_gen_fullpath)
 
-        target_properties_details = read_csv(
-            file_gen_fullpath, 
-            encoding="utf-8-sig",
-            sep = ',', header=None,
-            skiprows = 1,
-            names=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Details'], 
-            dtype={
-                'Active': 'string',
-                'Date Added': 'string',
-                'Last Active': 'string',
-                'URL': 'string',
-                'Price': 'string',
-                'ZIP': 'string',
-                'City': 'string',
-                'Disposition': 'string',
-                'Detail': 'string',
-            }
-        ).assign(Active=lambda x: 'X').values.tolist()
+        target_properties_details = list(
+            map(lambda set : set.to_list(), read_csv(
+                source=file_gen_fullpath, 
+                has_header=True,
+                columns=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Details'], 
+                encoding="utf-8-sig",
+                separator=',',
+                dtypes={
+                    'Active': Utf8,
+                    'Date Added': Utf8,
+                    'Last Active': Utf8,
+                    'URL': Utf8,
+                    'Price': Utf8,
+                    'ZIP': Utf8,
+                    'City': Utf8,
+                    'Disposition': Utf8,
+                    'Details': Utf8
+                })
+                .with_columns(col(["Active"]).str.replace_all('A', 'X',))
+                .transpose()
+                .get_columns()
+        ))
 
     except Exception as e:
-        # print(f"PY: ErrorHandler: Detected Error: {e}. Creating a file")
+        print(f"PY: ErrorHandler: Detected Error: {e}. Creating a file")
         create_file(output_directory, file_name, directory)
     
     print(f"PY: Getting data from CSV files DONE.")
-
     return target_properties_details
 
 
@@ -641,12 +643,12 @@ def write_content_to_output_files(file_prefix, all_target_properties_details, di
         create_dir_if_noexist(f"{output_directory}\\{directory}")
         file_gen_fullpath = f"{output_directory}\\{directory}\\{file_gen_name}"
 
-        DataFrame(all_target_properties_details[i]).to_csv(
-            path_or_buf=file_gen_fullpath, 
-            sep = ',', 
-            header=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Details'], 
-            encoding="utf-8-sig", 
-            index=False
+        DataFrame(all_target_properties_details[i],
+                     schema=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Details']
+                     ).write_csv(
+            file=file_gen_fullpath, 
+            include_header=True,
+            separator=',',
         )
 
     # Reset the list content to empty list of lists and free memory

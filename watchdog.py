@@ -2,7 +2,6 @@ from time import process_time, gmtime, time, strftime
 from watchdog_lib import main_execution_flow, \
                          main_execution_flow_async, \
                          get_cpu_info, \
-                         get_cpus_with_least_usage, \
                          process_ids, \
                          cpu_affinity
 
@@ -50,8 +49,6 @@ if __name__ == '__main__':
     wall_time_start = time()
 
     get_cpu_info()
-    two_least_utilized_cores_sorted = get_cpus_with_least_usage(2)
-
     main(asynchronous=True)
 
     elapsed_cpu_time = process_time() - cpu_time_start

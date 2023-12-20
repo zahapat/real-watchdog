@@ -75,14 +75,14 @@ search_details = [
 
 # Get information about CPU
 def get_cpu_info():
-    print(f'PY: platform.processor() = {processor()}', flush=True)
-    print(f'PY: platform.machine() = {machine()}', flush=True)
-    print(f'PY: platform.architecture() = {architecture()}', flush=True)
-    print(f'PY: platform.python_version_tuple() = {python_version_tuple()}', flush=True)
-    print(f'PY: os.cpu_count() = {cpu_count()}', flush=True)
-    print(f'PY: psutil.cpu_percent(percpu=True) = {cpu_percent(percpu=True)}', flush=True)
-    print(f'PY: getpid() = {getpid()}', flush=True)
-    print(f'PY: psutil.Process(getpid(getpid())).cpu_affinity() = {psutil_Process(getpid()).cpu_affinity()}', flush=True)
+    print(f'PY: platform.processor()\n    = {processor()}', flush=True)
+    print(f'PY: platform.machine()\n    = {machine()}', flush=True)
+    print(f'PY: platform.architecture()\n    = {architecture()}', flush=True)
+    print(f'PY: platform.python_version_tuple()\n    = {python_version_tuple()}', flush=True)
+    print(f'PY: os.cpu_count()\n    = {cpu_count()}', flush=True)
+    print(f'PY: os.getpid()\n    = {getpid()}', flush=True)
+    print(f'PY: psutil.Process(getpid(getpid())).cpu_affinity()\n    = {psutil_Process(getpid()).cpu_affinity()}', flush=True)
+    print(f'PY: psutil.cpu_percent(percpu=True)\n    = {cpu_percent(percpu=True)}', flush=True)
 
 # Find the respective cores with least usage to assign processes to these cores later
 def get_cpus_with_least_usage(number_of_cpus=None):

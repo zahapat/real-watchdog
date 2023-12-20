@@ -75,14 +75,14 @@ search_details = [
 
 # Get information about CPU
 def get_cpu_info():
-    print(f'PY: platform.processor() = {processor()}')
-    print(f'PY: platform.machine() = {machine()}')
-    print(f'PY: platform.architecture() = {architecture()}')
-    print(f'PY: platform.python_version_tuple() = {python_version_tuple()}')
-    print(f'PY: os.cpu_count() = {cpu_count()}')
-    print(f'PY: psutil.cpu_percent(percpu=True) = {cpu_percent(percpu=True)}')
-    print(f'PY: getpid() = {getpid()}')
-    print(f'PY: psutil.Process(getpid(getpid())).cpu_affinity() = {psutil_Process(getpid()).cpu_affinity()}')
+    print(f'PY: platform.processor() = {processor()}', flush=True)
+    print(f'PY: platform.machine() = {machine()}', flush=True)
+    print(f'PY: platform.architecture() = {architecture()}', flush=True)
+    print(f'PY: platform.python_version_tuple() = {python_version_tuple()}', flush=True)
+    print(f'PY: os.cpu_count() = {cpu_count()}', flush=True)
+    print(f'PY: psutil.cpu_percent(percpu=True) = {cpu_percent(percpu=True)}', flush=True)
+    print(f'PY: getpid() = {getpid()}', flush=True)
+    print(f'PY: psutil.Process(getpid(getpid())).cpu_affinity() = {psutil_Process(getpid()).cpu_affinity()}', flush=True)
 
 # Find the respective cores with least usage to assign processes to these cores later
 def get_cpus_with_least_usage(number_of_cpus=None):
@@ -92,10 +92,10 @@ def get_cpus_with_least_usage(number_of_cpus=None):
                                                 key= lambda zipped_item : zipped_item[1], 
                                                 reverse=False)
     if number_of_cpus == None:
-        print(f'PY: All cores sorted from the lowest utilization percentage (core_id, utilization): {zipped_cores_percentages_and_ids}')
+        print(f'PY: All cores sorted from the lowest utilization percentage (core_id, utilization): {zipped_cores_percentages_and_ids}', flush=True)
         return zipped_cores_percentages_and_ids
     else:
-        print(f'PY: {number_of_cpus} cores sorted from the lowest utilization percentage (core_id, utilization): {zipped_cores_percentages_and_ids[:number_of_cpus]}')
+        print(f'PY: {number_of_cpus} cores sorted from the lowest utilization percentage (core_id, utilization): {zipped_cores_percentages_and_ids[:number_of_cpus]}', flush=True)
         return zipped_cores_percentages_and_ids[:number_of_cpus]
 
 
@@ -111,14 +111,14 @@ advertisements_done = [0 for i in range(cpu_cores)]
 def create_dir_if_noexist(path_to_dir):
     if not path.exists(f"{path_to_dir}"):
         mkdir(f"{path_to_dir}")
-        print(f"PY: Created {path_to_dir}")
+        print(f"PY: Created {path_to_dir}", flush=True)
 
 
 # Remove directory if exist
 def remove_dir(path):
     import shutil
     shutil.rmtree(f"{path}")
-    print(f"PY: Removed {path}")
+    print(f"PY: Removed {path}", flush=True)
 
 
 # Send an email
@@ -131,7 +131,7 @@ def send_email(purpose, to_recepients_list, new_target_properties_details):
     if send_email == True:
         pass
     else:
-        print(f"There are no new properties. Skip sending email messsage.")
+        print(f"There are no new properties. Skip sending email messsage.", flush=True)
         return 1
 
     subject = 'Watchdog: nové položky '+purpose+' ze dne '\
@@ -174,7 +174,7 @@ def send_email(purpose, to_recepients_list, new_target_properties_details):
     # Reset the list content to empty list of lists
     new_target_properties_details = [[] for i in search_dispositions_list]
 
-    print(f"PY: Email has been sent successfully.")
+    print(f"PY: Email has been sent successfully.", flush=True)
 
     return 0
 
@@ -217,7 +217,7 @@ def send_report_email(purpose, purpose_context, to_recepients_list):
             smtp.sendmail(from_addr=smtp_username, to_addrs=recepient, msg=msg.as_string())
 
 
-    print(f"PY: Email has been sent successfully.")
+    print(f"PY: Email has been sent successfully.", flush=True)
 
     return 0
 
@@ -227,7 +227,7 @@ def create_file(output_directory, file_name, directory="database"):
     file_gen_name = file_name
     create_dir_if_noexist(f"{output_directory}\\{directory}")
     file_gen_fullpath = f"{output_directory}\\{directory}\\{file_gen_name}"
-    print(f"PY: New file {file_gen_name} created: {file_gen_fullpath}")
+    print(f"PY: New file {file_gen_name} created: {file_gen_fullpath}", flush=True)
     file_gen_line = open(file_gen_fullpath, 'w', encoding="utf-8-sig")
     file_gen_line.close()
 
@@ -240,7 +240,6 @@ def get_data_from_file(file_name, directory="database"):
         output_directory = path.dirname(path.realpath(__file__))
         create_dir_if_noexist(f"{output_directory}\\{directory}")
         file_gen_fullpath = f"{output_directory}\\{directory}\\{file_name}"
-        print(file_gen_fullpath)
 
         target_properties_details = list(
             map(lambda set : set.to_list(), read_csv(
@@ -266,10 +265,10 @@ def get_data_from_file(file_name, directory="database"):
         ))
 
     except Exception as e:
-        print(f"PY: ErrorHandler: Detected Error: {e}. Creating a file")
+        print(f"PY: ErrorHandler: Detected Error: {e}. Creating a file", flush=True)
         create_file(output_directory, file_name, directory)
     
-    print(f"PY: Getting data from CSV files DONE.")
+    print(f"PY: Getting data from CSV files DONE.", flush=True)
     return target_properties_details
 
 
@@ -321,11 +320,11 @@ def get_details(url, advertised_property_details, new_target_properties_details_
                 # Announce new advertised property
                 advertised_property_details[3] = url
                 new_target_properties_details_queue.put(advertised_property_details.copy())
-                print(f"PY: New item: {advertised_property_details}")
+                print(f"PY: New item: {advertised_property_details}", flush=True)
 
 
     except ValueError as e:
-        print(f"Error while processing {url}: {e}")
+        print(f"Error while processing {url}: {e}", flush=True)
 
 
 # Function to search for the pattern in a web page
@@ -383,7 +382,7 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
                                             and advertised_property_details[3] in mask_char_values_in_string(all_target_properties_detail[3], -mask):
 
                                             # Mark as Active and set visited flag to True
-                                            print(f"PY: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}")
+                                            print(f"PY: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}", flush=True)
                                             visited = True
                                             break
 
@@ -404,7 +403,7 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
         return 0
 
     except ValueError as e:
-        print(f"Error while processing {url}: {e}")
+        print(f"Error while processing {url}: {e}", flush=True)
 
 
 
@@ -463,7 +462,7 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
                                             and advertised_property_details[3] in mask_char_values_in_string(all_target_properties_detail[3], -mask):
 
                                             # Mark as Active and set visited flag to True
-                                            print(f"PY: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}")
+                                            print(f"PY: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}", flush=True)
                                             visited = True
                                             break
 
@@ -484,7 +483,7 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
         return 0
 
     except ValueError as e:
-        print(f"Error while processing {url}: {e}")
+        print(f"Error while processing {url}: {e}", flush=True)
 
 
 
@@ -503,14 +502,14 @@ def check_if_active_property_thread(all_target_property_detail, all_target_prope
                     all_target_property_detail[2] = str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y")) # Override Last Active Time
                 else:
                     # Do not update all_target_property_detail, report inactive
-                    print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}")
+                    print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}", flush=True)
             except:
                 # Do not update all_target_property_detail, report inactive
-                print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}")
+                print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}", flush=True)
 
     except ValueError as e:
-        print(f"PY: check_if_active_property_thread: Error while processing: {all_target_property_detail[3]}: {e}")
-        print(f"PY: check_if_active_property_thread: DEBUG: all_target_property_detail = {all_target_property_detail}")
+        print(f"PY: check_if_active_property_thread: Error while processing: {all_target_property_detail[3]}: {e}", flush=True)
+        print(f"PY: check_if_active_property_thread: DEBUG: all_target_property_detail = {all_target_property_detail}", flush=True)
 
     all_target_properties_detail_queue.put(all_target_property_detail.copy())
 
@@ -531,14 +530,14 @@ async def check_if_active_property_thread_async(all_target_property_detail, all_
                     all_target_property_detail[2] = str(datetime.now(ZoneInfo(zone_info)).date().strftime("%d.%m.%Y")) # Override Last Active Time
                 else:
                     # Do not update all_target_property_detail, report inactive
-                    print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}")
+                    print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}", flush=True)
             except:
                 # Do not update all_target_property_detail, report inactive
-                print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}")
+                print(f"PY: Inactive: {mask_char_values_in_string(all_target_property_detail[3], -1*this_mask)}", flush=True)
 
     except ValueError as e:
-        print(f"PY: check_if_active_property_thread: Error while processing: {all_target_property_detail[3]}: {e}")
-        print(f"PY: check_if_active_property_thread: DEBUG: all_target_property_detail = {all_target_property_detail}")
+        print(f"PY: check_if_active_property_thread: Error while processing: {all_target_property_detail[3]}: {e}", flush=True)
+        print(f"PY: check_if_active_property_thread: DEBUG: all_target_property_detail = {all_target_property_detail}", flush=True)
 
     all_target_properties_detail_queue.put(all_target_property_detail.copy())
 
@@ -546,7 +545,7 @@ async def check_if_active_property_thread_async(all_target_property_detail, all_
 
 def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask):
     # global all_target_properties_details
-    print(f"PY: Checking for active URLs...")
+    print(f"PY: Checking for active URLs...", flush=True)
     threads_all_target_properties_details = [[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_len =[[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_queue = [[] for i in range(len(all_target_properties_details))]
@@ -576,14 +575,14 @@ def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask
             all_target_properties_detail[threads_all_target_properties_details_indices[i][j]] = threads_all_target_properties_details_queue[i][j].get()
 
         
-    print(f"PY: Checking for active URL DONE.")
+    print(f"PY: Checking for active URL DONE.", flush=True)
     return all_target_properties_details
 
 
 
 async def check_for_active_urls_threaded_async(all_target_properties_details, this_mask=mask):
     # global all_target_properties_details
-    print(f"PY: Checking for active URLs...")
+    print(f"PY: Checking for active URLs...", flush=True)
     threads_all_target_properties_details_queue = [[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_indices = [[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_indices_len = [[] for i in range(len(all_target_properties_details))]
@@ -614,7 +613,7 @@ async def check_for_active_urls_threaded_async(all_target_properties_details, th
             all_target_properties_detail[threads_all_target_properties_details_indices[i][j]] = threads_all_target_properties_details_queue[i][j].get()
 
         
-    print(f"PY: Checking for active URL DONE.")
+    print(f"PY: Checking for active URL DONE.", flush=True)
     return all_target_properties_details
 
 
@@ -622,17 +621,17 @@ async def check_for_active_urls_threaded_async(all_target_properties_details, th
 # Sort the databases from the newest to the oldest added item
 def sort_list_by_date(all_target_properties_details):
     # global all_target_properties_details
-    print(f"PY: Sorting list by time added...")
+    print(f"PY: Sorting list by time added...", flush=True)
     for all_target_properties_detail in all_target_properties_details:
         all_target_properties_detail.sort(key=lambda x: datetime.strptime(x[1], "%d.%m.%Y"), reverse=True)
-    print(f"PY: Sorting list by time added DONE.")
+    print(f"PY: Sorting list by time added DONE.", flush=True)
 
     return all_target_properties_details
 
 
 # Write the content to the respective output files
 def write_content_to_output_files(file_prefix, all_target_properties_details, directory="database"):
-    print(f"PY: Writing data to CSV files...")
+    print(f"PY: Writing data to CSV files...", flush=True)
 
     # Using len() and indices is 15 seconds faster than for _ in _ method in the first for loop
     search_dispositions_list_len = len(search_dispositions_list)
@@ -653,7 +652,7 @@ def write_content_to_output_files(file_prefix, all_target_properties_details, di
     # Reset the list content to empty list of lists and free memory
     all_target_properties_details = [[] for i in search_dispositions_list]
 
-    print(f"PY: Writing data to CSV files DONE.")
+    print(f"PY: Writing data to CSV files DONE.", flush=True)
 
 
 # [UNUSED] Xor two strings to create a masked string based on a custom secret mask
@@ -685,7 +684,7 @@ def mask_char_values_in_string(string, bias):
 
 # Append all new properties to the list of all target properties
 def append_all_new_properties(new_target_properties_details_queue, all_target_properties_details):
-    print("PY: Update all target properties database list...")
+    print("PY: Update all target properties database list...", flush=True)
     new_target_properties_details = [[] for i in search_dispositions_list]
     while not new_target_properties_details_queue.empty():
         # Get one item from the queue holding information about the new property
@@ -702,7 +701,7 @@ def append_all_new_properties(new_target_properties_details_queue, all_target_pr
                 new_target_properties_detail[6] = mask_char_values_in_string(new_target_properties_detail[6], mask)
                 all_target_properties_details[i].append(new_target_properties_detail.copy())
 
-    print("PY: Update all target properties database list DONE.")
+    print("PY: Update all target properties database list DONE.", flush=True)
     return all_target_properties_details, new_target_properties_details
 
 
@@ -710,7 +709,7 @@ def find_new_and_update_all_properties_from_websites(
         threads_count, all_target_properties_details, website_substring, process_id):
 
     # Start the search from the initial URL, loop until there is at least one advertisement
-    print(f"PY: Getting data from website...")
+    print(f"PY: Getting data from website...", flush=True)
     global advertisements_done
     threads_page = []
     new_target_properties_details_queue = Queue()
@@ -752,16 +751,16 @@ def find_new_and_update_all_properties_from_websites(
         [threads_page[i].join() for i in range (threads_page_len)]
 
         current_time = time()-timer_start
-        print(f"PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} done. Timer: {current_time}")
+        print(f"PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} done. Timer: {current_time}", flush=True)
 
         if advertisements_done[process_id] == 1:
-            print(f"PY: Process {process_id}: Reached the last page. Break.")
+            print(f"PY: Process {process_id}: Reached the last page. Break.", flush=True)
             break
         elif current_time > max_timer_break:
-            print(f"PY: Process {process_id}: Maximum timer value reached. Break.")
+            print(f"PY: Process {process_id}: Maximum timer value reached. Break.", flush=True)
             break
         elif max_scan_pages >= max_scan_pages_break:
-            print(f"PY: Process {process_id}: Maximum limit of pages to scan reached. Break.")
+            print(f"PY: Process {process_id}: Maximum limit of pages to scan reached. Break.", flush=True)
             break
             
 
@@ -771,7 +770,7 @@ def find_new_and_update_all_properties_from_websites(
 
     threads_page = []
     advertisements_done[process_id] = 0
-    print(f"PY: Getting data from website DONE.")
+    print(f"PY: Getting data from website DONE.", flush=True)
 
     all_target_properties_details, new_target_properties_details = append_all_new_properties(
         new_target_properties_details_queue, 
@@ -785,7 +784,7 @@ async def find_new_and_update_all_properties_from_websites_async(
         threads_count, all_target_properties_details, website_substring, process_id):
     
     # Start the search from the initial URL, loop until there is at least one advertisement
-    print(f"PY: Getting data from website...")
+    print(f"PY: Getting data from website...", flush=True)
     global advertisements_done
     threads_page = []
     new_target_properties_details_queue = Queue()
@@ -827,16 +826,16 @@ async def find_new_and_update_all_properties_from_websites_async(
             [threads_page[i].join() for i in range(threads_page_len)]
 
         current_time = time()-timer_start
-        print(f"PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} done. Timer: {current_time}")
+        print(f"PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} done. Timer: {current_time}", flush=True)
 
         if advertisements_done[process_id] == 1:
-            print(f"PY: Process {process_id}: Reached the last page. Break.")
+            print(f"PY: Process {process_id}: Reached the last page. Break.", flush=True)
             break
         elif current_time > max_timer_break:
-            print(f"PY: Process {process_id}: Maximum timer value reached. Break.")
+            print(f"PY: Process {process_id}: Maximum timer value reached. Break.", flush=True)
             break
         elif max_scan_pages >= max_scan_pages_break:
-            print(f"PY: Process {process_id}: Maximum limit of pages to scan reached. Break.")
+            print(f"PY: Process {process_id}: Maximum limit of pages to scan reached. Break.", flush=True)
             break
 
         min_scan_pages += threads_count
@@ -845,7 +844,7 @@ async def find_new_and_update_all_properties_from_websites_async(
 
     threads_page = []
     advertisements_done[process_id] = 0
-    print(f"PY: Getting data from website DONE.")
+    print(f"PY: Getting data from website DONE.", flush=True)
 
     all_target_properties_details, new_target_properties_details = append_all_new_properties(
         new_target_properties_details_queue, 
@@ -861,9 +860,9 @@ def main_execution_flow(
     # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
         this_process = psutil_Process()
-        print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
+        print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}', flush=True)
         this_process.cpu_affinity([cpu_affinity])
-        print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')
+        print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}', flush=True)
 
     # Create an array of output files if noexist and get data from them
     all_target_properties_details = [[] for i in search_dispositions_list]
@@ -897,9 +896,9 @@ def main_execution_flow_async(
     # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
         this_process = psutil_Process()
-        print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
+        print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}', flush=True)
         this_process.cpu_affinity([cpu_affinity])
-        print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')
+        print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}', flush=True)
 
     # Create an array of output files if noexist and get data from them
     all_target_properties_details = [[] for i in search_dispositions_list]

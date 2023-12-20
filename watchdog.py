@@ -15,7 +15,7 @@ def main(asynchronous=False):
 
 
     if asynchronous:
-        print(f'PY: Running in asynchronous mode using the httpx library')
+        print(f'PY: Running in asynchronous mode using the httpx library', flush=True)
         # Run Parallel Job: Properties for sale (Child Process 0)
         from multiprocessing import Process as mp_Process
         parallel_processes.append(mp_Process( 
@@ -28,7 +28,7 @@ def main(asynchronous=False):
         # Run Parallel Job: Properties for rent (Parent Process 1)
         main_execution_flow_async(f"pronajem", f"k pronájmu", f"/pronajmu/byt/", threads_count, process_ids[0], cpu_affinity=cpu_affinity[0])
     else:
-        print(f'PY: Running using the requests library')
+        print(f'PY: Running using the requests library', flush=True)
         # Run Parallel Job: Properties for sale (Child Process 0)
         from multiprocessing import Process as mp_Process
         parallel_processes.append(mp_Process( 
@@ -56,5 +56,5 @@ if __name__ == '__main__':
 
     elapsed_cpu_time = process_time() - cpu_time_start
     elapsed_wall_time = time() - wall_time_start
-    print("PY: CPU time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_cpu_time)))
-    print("PY: Wall time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_wall_time)))
+    print("PY: CPU time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_cpu_time)), flush=True)
+    print("PY: Wall time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_wall_time)), flush=True)

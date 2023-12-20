@@ -273,7 +273,7 @@ def get_data_from_file(file_name, directory="database"):
 
 
 # Function to search for the pattern in a web page
-def get_details(url, advertised_property_details, new_target_properties_details_queue):
+def get_details(url, advertised_property_details, new_target_properties_details_queue, process_id):
 
     try:
         searched_property_details = ""
@@ -320,7 +320,7 @@ def get_details(url, advertised_property_details, new_target_properties_details_
                 # Announce new advertised property
                 advertised_property_details[3] = url
                 new_target_properties_details_queue.put(advertised_property_details.copy())
-                print(f"PY: New item: {advertised_property_details}", flush=True)
+                print(f"PY: Process {process_id}: New item: {advertised_property_details}", flush=True)
 
 
     except ValueError as e:
@@ -393,7 +393,8 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
                                     get_details(
                                         website_url_root+advertised_property_details[3], 
                                         advertised_property_details,
-                                        new_target_properties_details_queue)
+                                        new_target_properties_details_queue,
+                                        process_id)
 
         # Returns 1 if on the last page, else 0 to proceed to the next page
         if advertisements == 0: 
@@ -462,7 +463,7 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
                                             and advertised_property_details[3] in mask_char_values_in_string(all_target_properties_detail[3], -mask):
 
                                             # Mark as Active and set visited flag to True
-                                            print(f"PY: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}", flush=True)
+                                            print(f"PY: Process {process_id}: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}", flush=True)
                                             visited = True
                                             break
 
@@ -473,7 +474,8 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
                                     get_details(
                                         website_url_root+advertised_property_details[3], 
                                         advertised_property_details,
-                                        new_target_properties_details_queue)
+                                        new_target_properties_details_queue,
+                                        process_id)
 
         # Returns 1 if on the last page, else 0 to proceed to the next page
         if advertisements == 0: 

@@ -11,7 +11,8 @@ from watchdog_lib import unmask_database_items, \
                          remove_dir, \
                          recepients_list, \
                          process_ids, \
-                         cpu_affinity
+                         cpu_affinity, \
+                         print
 
 
 def report(purpose, purpose_context, process_id, cpu_affinity=None, asynchronous=False):
@@ -19,9 +20,9 @@ def report(purpose, purpose_context, process_id, cpu_affinity=None, asynchronous
     # This process is supposed to be executed on a separate core defined by cpu_affinity. Check affinity, assign the process to this core altering the affinity.
     if cpu_affinity != None:
         this_process = psutil_Process()
-        print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}', flush=True)
+        print(f'PY: Process #{process_id}: {this_process}, affinity {this_process.cpu_affinity()}')
         this_process.cpu_affinity([cpu_affinity])
-        print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}', flush=True)
+        print(f'PY: Process #{process_id}: Set affinity to {cpu_affinity}, affinity now {this_process.cpu_affinity()}')
 
     all_target_properties_details = unmask_database_items(purpose)
     if asynchronous:
@@ -58,5 +59,5 @@ if __name__ == '__main__':
     main()
     elapsed_cpu_time = process_time() - cpu_time_start
     elapsed_wall_time = time() - wall_time_start
-    print("PY: CPU time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_cpu_time)), flush=True)
-    print("PY: Wall time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_wall_time)), flush=True)
+    print("PY: CPU time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_cpu_time)))
+    print("PY: Wall time elapsed: ", strftime("%H:%M:%S", gmtime(elapsed_wall_time)))

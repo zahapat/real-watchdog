@@ -37,7 +37,6 @@ agent = {
 recepients_list = list(filter(None, environ["recepients_email"].split(',')))
 search_cities_list = list(filter(None, str(environ["search_cities_list"]).split(',')))
 
-
 # String envs
 zone_info = environ["zone_info"]
 smtp_server = environ["smtp_server"]

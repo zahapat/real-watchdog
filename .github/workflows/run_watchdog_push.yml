@@ -51,6 +51,7 @@ jobs:
               run: |
                 echo "CACHEDIR=$(pip cache dir)" >> $GITHUB_OUTPUT
                 echo "CACHEDIR: $CACHEDIR"
+              shell: bash
 
             - name: Cache Python Packages
               id: cache-packages

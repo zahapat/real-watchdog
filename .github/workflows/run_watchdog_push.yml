@@ -49,7 +49,7 @@ jobs:
             - name: Get Pip Cache Directory
               id: cache-dir
               run: |
-                echo ${{ env.pip_cache_loc }}"
+                echo ${{ env.pip_cache_loc }}
 
             - name: Cache Python Packages
               id: cache-packages

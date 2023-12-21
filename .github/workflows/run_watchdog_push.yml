@@ -46,11 +46,6 @@ jobs:
               with:
                 python-version: ${{ matrix.python-version }}
 
-            - name: Get Pip Cache Directory
-              id: cache-dir
-              run: |
-                echo ${{ env.pip_cache_loc }}
-
             - name: Cache Python Packages
               id: cache-packages
               uses: actions/cache@v3

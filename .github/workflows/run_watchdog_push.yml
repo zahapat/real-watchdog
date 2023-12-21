@@ -48,9 +48,9 @@ jobs:
             - name: Get Pip Cache Directory
               id: pip-cache
               run: |
-                cachedir=$(pip cache dir)
-                echo cachedir
-                cachedir >> "$GITHUB_OUTPUT"
+                echo "cachedir=$(pip cache dir)"
+                echo $cachedir
+                $cachedir >> "$GITHUB_OUTPUT"
 
             - name: Cache Python Packages
               id: cache-packages

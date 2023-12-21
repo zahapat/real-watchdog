@@ -53,32 +53,29 @@ jobs:
                 echo "CACHEDIR=$(pip cache dir)" >> $GITHUB_OUTPUT
                 echo "CACHEDIR: $CACHEDIR"
               shell: bash
-            - name: Get OS
-              id: get-os
-              run: |
-                echo "OS_NAME=${{ runner.os }}" >> $GITHUB_OUTPUT
-                echo $OS_NAME
+            # - name: Get OS
+            #   id: get-os
+            #   run: |
+            #     echo "OS_NAME=${{ runner.os }}" >> $GITHUB_OUTPUT
+            #     echo $OS_NAME
+            #   shell: bash
+
+
+            - if: startsWith(runner.os, 'macOS')
+              id: get-cachedir-${{ runner.os }}
               shell: bash
-
-
-            # - if: startsWith(runner.os, 'macOS')
-            #   id: get-cachedir-macos
-            #   shell: bash
-            #   run: |
-            #     echo "CACHEDIR=~/Library/Caches/pip" >> $GITHUB_OUTPUT
-            #     echo "CACHE_ID=get-cachedir-macos" >> $GITHUB_OUTPUT
-            # - if: startsWith(runner.os, 'Windows')
-            #   id: get-cachedir-windows
-            #   shell: bash
-            #   run: |
-            #     echo "CACHEDIR=~\AppData\Local\pip\Cache" >> $GITHUB_OUTPUT
-            #     echo "CACHE_ID=get-cachedir-windows" >> $GITHUB_OUTPUT
-            # - if: startsWith(runner.os, 'Linux')
-            #   id: get-cachedir-linux
-            #   shell: bash
-            #   run: |
-            #     echo "CACHEDIR=~/.cache/pip" >> $GITHUB_OUTPUT
-            #     echo "CACHE_ID=get-cachedir-linux" >> $GITHUB_OUTPUT
+              run: |
+                echo "CACHEDIR=~/Library/Caches/pip" >> $GITHUB_OUTPUT
+            - if: startsWith(runner.os, 'Windows')
+              id: get-cachedir-${{ runner.os }}
+              shell: bash
+              run: |
+                echo "CACHEDIR=~\AppData\Local\pip\Cache" >> $GITHUB_OUTPUT
+            - if: startsWith(runner.os, 'Linux')
+              id: get-cachedir-${{ runner.os }}
+              shell: bash
+              run: |
+                echo "CACHEDIR=~/.cache/pip" >> $GITHUB_OUTPUT
 
 
 

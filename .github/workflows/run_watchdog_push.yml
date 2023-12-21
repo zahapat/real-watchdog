@@ -47,12 +47,23 @@ jobs:
                 python-version: ${{ matrix.python-version }}
 
             # Do not remove this line: shell: bash
-            - name: Get Pip Cache Directory
+            # - name: Get Pip Cache Directory
+            #   id: get-cachedir
+            #   run: |
+            #     echo "CACHEDIR=$(pip cache dir)" >> $GITHUB_OUTPUT
+            #     echo "CACHEDIR: $CACHEDIR"
+            #   shell: bash
+            - if: startsWith(runner.os, 'macOS')
               id: get-cachedir
-              run: |
-                echo "CACHEDIR=$(pip cache dir)" >> $GITHUB_OUTPUT
-                echo "CACHEDIR: $CACHEDIR"
-              shell: bash
+              run: echo "CACHEDIR=~/Library/Caches/pip" >> $GITHUB_OUTPUT
+            - if: startsWith(runner.os, 'Windows')
+              id: get-cachedir
+              run: echo "CACHEDIR=~\AppData\Local\pip\Cache" >> $GITHUB_OUTPUT
+            - if: startsWith(runner.os, 'Linux')
+              id: get-cachedir
+              run: echo "CACHEDIR=~/.cache/pip" >> $GITHUB_OUTPUT
+            
+
 
             - name: Cache Python Packages
               id: cache-packages

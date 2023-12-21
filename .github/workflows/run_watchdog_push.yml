@@ -18,6 +18,7 @@ env:
     website_url_root: ${{ secrets.WEBSITE_URL_ROOT }}
     search_requirements: ${{ secrets.SEARCH_REQUIREMENTS }}
     mask: ${{ secrets.MASK }}
+    pip_cache_loc: $(pip cache dir)
 
 # Allow write permissions to the remote repo
 permissions:
@@ -48,13 +49,13 @@ jobs:
             - name: Get Pip Cache Directory
               id: cache-dir
               run: |
-                echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+                echo ${{ env.pip_cache_loc }}"
 
             - name: Cache Python Packages
               id: cache-packages
               uses: actions/cache@v3
               with:
-                path: ${{ steps.cache-dir.outputs.dir }}
+                path: ${{ env.pip_cache_loc }}
                 key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
                 restore-keys: |
                   ${{ runner.os }}-pip-

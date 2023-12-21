@@ -46,6 +46,7 @@ jobs:
               with:
                 python-version: ${{ matrix.python-version }}
 
+            # Do not remove this line: shell: bash
             - name: Get Pip Cache Directory
               id: get-cachedir
               run: |

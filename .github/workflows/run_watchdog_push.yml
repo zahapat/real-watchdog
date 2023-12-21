@@ -58,7 +58,7 @@ jobs:
               env:
                 CACHEDIR: ${{ steps.get-cachedir.outputs.CACHEDIR }}
               with:
-                path: $CACHEDIR
+                path: ${{ env.CACHEDIR }}
                 key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
                 restore-keys: |
                   ${{ runner.os }}-pip-

@@ -62,17 +62,17 @@ jobs:
 
 
             - if: startsWith(runner.os, 'macOS')
-              id: get-cachedir-${{ runner.os }}
+              id: get-cachedir-macOS
               shell: bash
               run: |
                 echo "CACHEDIR=~/Library/Caches/pip" >> $GITHUB_OUTPUT
             - if: startsWith(runner.os, 'Windows')
-              id: get-cachedir-${{ runner.os }}
+              id: get-cachedir-Windows
               shell: bash
               run: |
                 echo "CACHEDIR=~\AppData\Local\pip\Cache" >> $GITHUB_OUTPUT
             - if: startsWith(runner.os, 'Linux')
-              id: get-cachedir-${{ runner.os }}
+              id: get-cachedir-Linux
               shell: bash
               run: |
                 echo "CACHEDIR=~/.cache/pip" >> $GITHUB_OUTPUT

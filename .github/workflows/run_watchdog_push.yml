@@ -34,6 +34,11 @@ jobs:
                 python-version: ['3.11']
             fail-fast: false
 
+        # Map Job Outputs Accessible by Another Jobs
+         outputs:
+              cachedir: ${{ steps.get-cachedir.outputs.CACHEDIR }}
+
+        # Define Job Steps
         steps:
             - name: Checkout Code
               id: checkout-code
@@ -46,17 +51,18 @@ jobs:
                 python-version: ${{ matrix.python-version }}
 
             - name: Get Pip Cache Directory
-              id: pip-cache
+              id: get-cachedir
               run: |
-                "cachedir=$(pip cache dir)"
-                echo $cachedir
-                $cachedir >> "$GITHUB_OUTPUT"
+                echo "CACHEDIR=$(pip cache dir)" >> "$GITHUB_OUTPUT"
+                echo $CACHEDIR
 
             - name: Cache Python Packages
               id: cache-packages
               uses: actions/cache@v3
+              env:
+                CACHEDIR: ${{ steps.get-cachedir.outputs.CACHEDIR }}
               with:
-                path: ${{ steps.pip-cache.outputs.cachedir }}
+                path: $CACHEDIR
                 key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
                 restore-keys: |
                   ${{ runner.os }}-pip-

@@ -34,10 +34,6 @@ jobs:
                 python-version: ['3.11']
             fail-fast: false
 
-        # Map Job Outputs Accessible by Another Jobs
-         outputs:
-              cachedir: ${{ steps.get-cachedir.outputs.CACHEDIR }}
-
         # Define Job Steps
         steps:
             - name: Checkout Code

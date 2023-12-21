@@ -59,31 +59,26 @@ jobs:
             #     echo "OS_NAME=${{ runner.os }}" >> $GITHUB_OUTPUT
             #     echo $OS_NAME
             #   shell: bash
-
-
-            - if: startsWith(runner.os, 'macOS')
-              id: get-cachedir-macOS
-              shell: bash
+            - name: Get OS
+              id: get-os
               run: |
-                echo "CACHEDIR=~/Library/Caches/pip" >> $GITHUB_OUTPUT
-            - if: startsWith(runner.os, 'Windows')
-              id: get-cachedir-Windows
+                echo $(uname);
+                UNAME=$(uname);
+                if [ "$UNAME" == "Linux" ] ; then 
+                    echo "CACHEDIR=~/.cache/pip" >> $GITHUB_OUTPUT
+                elif [ "$UNAME" == "Darwin" ] ; then 
+                    echo "CACHEDIR=~/Library/Caches/pip" >> $GITHUB_OUTPUT
+                elif [[ "$UNAME" == CYGWIN* || "$UNAME" == MINGW* ]] ; then 
+                    echo "CACHEDIR=~\AppData\Local\pip\Cache" >> $GITHUB_OUTPUT
+                fi
               shell: bash
-              run: |
-                echo "CACHEDIR=~\AppData\Local\pip\Cache" >> $GITHUB_OUTPUT
-            - if: startsWith(runner.os, 'Linux')
-              id: get-cachedir-Linux
-              shell: bash
-              run: |
-                echo "CACHEDIR=~/.cache/pip" >> $GITHUB_OUTPUT
-
 
 
             - name: Cache Python Packages
               id: cache-packages
               uses: actions/cache@v3
               with:
-                path: ${{ steps.get-cachedir-${{ runner.os }}.outputs.CACHEDIR }}
+                path: ${{ steps.get-cachedir.outputs.CACHEDIR }}
                 key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
                 restore-keys: |
                   ${{ runner.os }}-pip-

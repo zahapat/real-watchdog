@@ -33,66 +33,26 @@ jobs:
                 python-version: ['3.11']
             fail-fast: false
 
-        # Define Job Steps
         steps:
             - name: Checkout Code
-              id: checkout-code
               uses: actions/checkout@v3
 
             - name: Setup Python Version ${{ matrix.python-version }}
-              id: setup-python
               uses: actions/setup-python@v4
+              id: setuppython
               with:
                 python-version: ${{ matrix.python-version }}
 
-            # Do not remove this line: shell: bash
-            - name: Set Pip Cache Directory by OS
-              id: set-cachedir-by-os
-              run: |
-                OS=$(uname);
-                if [ "$OS" == "Linux" ] ; then 
-                    echo "CACHEDIR=~/.cache/pip" >> $GITHUB_OUTPUT
-                    echo "Linux"
-                elif [ "$OS" == "Darwin" ] ; then 
-                    echo "CACHEDIR=~/Library/Caches/pip" >> $GITHUB_OUTPUT
-                    echo "MacOS"
-                elif [[ "$OS" == CYGWIN* || "$OS" == MINGW* ]] ; then 
-                    echo "CACHEDIR=~\AppData\Local\pip\Cache" >> $GITHUB_OUTPUT
-                    echo "Windows"
-                fi
-                echo "$OS"
-              shell: bash
-
-            - name: Cache Python Packages
-              id: cache-packages
-              uses: actions/cache@v3
+            - uses: actions/cache@v3
+              id: cache
               with:
-                path: ${{ steps.set-cachedir-by-os.outputs.CACHEDIR }}
-                key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-                restore-keys: |
-                  ${{ runner.os }}-pip-
+                path: ${{ env.pythonLocation }}
+                key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-run_weekly_report
 
-            - name: Install Packages
-              id: install-packages
-              if: ${{ steps.cache-packages.outputs.cache-hit != 'true' }}
-              continue-on-error: true
+            - name: Install Dependencies
+              if: steps.cache.outputs.cache-hit != 'true'
               run: pip install -r requirements.txt
 
-            - name: List All Installed Packages
-              id: list-packages
-              run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages
-
             - name: Run Python Script via Powershell
-              id: run-script
               shell: pwsh
-              run: python watchdog.py
-
-            - name: Push New Changes to Remote
-              id: push-changes
-              shell: pwsh
-              run: |
-                git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
-                git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
-                git add database
-                git commit -m "[refactor]: Update database via automated action"
-                git push origin main
+              run: python watchdog_report.py

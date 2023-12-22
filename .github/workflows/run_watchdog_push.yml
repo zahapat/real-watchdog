@@ -1,5 +1,5 @@
 # Workflow name
-name: Run Python Watchdog Script via Windows Powershell on Push
+name: Caching using pip
 
 # Run this workflow at scheduled times
 on: push

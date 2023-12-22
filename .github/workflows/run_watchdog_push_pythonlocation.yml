@@ -1,11 +1,8 @@
 # Workflow name
-name: Run Python Watchdog Script via Windows Powershell
+name: Caching using pythonlocation
 
 # Run this workflow at scheduled times
-on:
-    schedule:
-    # * is a special character in YAML so you have to quote this string
-    - cron:  '0 10,12,14,16,18,20 * * *'
+on: push
 
 # Create Environment Variables
 env:

@@ -737,7 +737,7 @@ def find_new_and_update_all_properties_from_websites(
     # Main loop for properties search
     timer_start = time()
     max_timer_break = 60
-    max_scan_pages_break = 200
+    max_scan_pages_break = 30
     while advertisements_done[int(process_id)] == 0:
 
         # Start threads
@@ -813,7 +813,7 @@ async def find_new_and_update_all_properties_from_websites_async(
     # Main loop for properties search
     timer_start = time()
     max_timer_break = 60
-    max_scan_pages_break = 200
+    max_scan_pages_break = 30
     while advertisements_done[int(process_id)] == 0:
 
         # Start async threads

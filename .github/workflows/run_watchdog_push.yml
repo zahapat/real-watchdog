@@ -46,7 +46,9 @@ jobs:
               with:
                 python-version: ${{ matrix.python-version }}
                 cache: 'pip'
-            - run: pip install -r requirements.txt
+
+            - name: Install Dependencies
+              run: pip install -r requirements.txt
 
             - name: List All Installed Packages
               id: list-packages

@@ -50,7 +50,7 @@ jobs:
 
             - name: List All Installed Packages
               id: list-packages
-              run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages
+              run: pip list packages
 
             - name: Run Python Script via Powershell
               id: run-script

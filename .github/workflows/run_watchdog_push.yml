@@ -41,12 +41,11 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Setup Python Version ${{ matrix.python-version }}
-              id: setup-python
               uses: actions/setup-python@v4
               with:
                 python-version: ${{ matrix.python-version }}
 
-            # Do not remove this line: shell: bash
+            # Caching using pip
             - name: Set Pip Cache Directory by OS
               id: set-cachedir-by-os
               run: |
@@ -62,38 +61,31 @@ jobs:
                     echo "Windows"
                 fi
                 echo "$OS"
-              shell: bash
+              shell: bash # Do not touch
 
             - name: Cache Python Packages
               id: cache-packages
               uses: actions/cache@v3
               with:
                 path: ${{ steps.set-cachedir-by-os.outputs.CACHEDIR }}
-                key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+                key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
                 restore-keys: |
-                  ${{ runner.os }}-pip-
+                  ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
             - name: Install Packages
-              id: install-packages
-            #   if: ${{ steps.cache-packages.outputs.cache-hit != 'true' }}
-            #   continue-on-error: true
               run: pip install -r requirements.txt
 
-            - name: List All Installed Packages
-              id: list-packages
+            - name: Check Installed Packages
               run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages
 
-            - name: Run Python Script via Powershell
-              id: run-script
-              shell: pwsh
-              run: python watchdog.py
+            # - name: Run Python Script via Powershell
+            #   shell: pwsh
+            #   run: python watchdog.py
 
-            - name: Push New Changes to Remote
-              id: push-changes
-              shell: pwsh
-              run: |
-                git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
-                git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
-                git add database
-                git commit -m "[refactor]: Update database via automated action"
-                git push origin main
+            # - name: Push New Changes to Remote
+            #   run: |
+            #     git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
+            #     git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
+            #     git add database
+            #     git commit -m "[refactor]: Update database via automated action"
+            #     git push origin main

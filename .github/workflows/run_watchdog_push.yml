@@ -82,10 +82,10 @@ jobs:
               shell: pwsh
               run: python watchdog.py
 
-            - name: Push New Changes to Remote
-              run: |
-                git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
-                git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
-                git add database
-                git commit -m "[refactor]: Update database via automated action"
-                git push origin main
+            # - name: Push New Changes to Remote
+            #   run: |
+            #     git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
+            #     git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
+            #     git add database
+            #     git commit -m "[refactor]: Update database via automated action"
+            #     git push origin main

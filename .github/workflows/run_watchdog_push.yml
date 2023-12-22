@@ -2,7 +2,7 @@
 name: Caching using pip
 
 # Run this workflow at scheduled times
-on: push
+on: workflow_dispatch
 
 # Create Environment Variables
 env:

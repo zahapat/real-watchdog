@@ -2,7 +2,7 @@
 name: Caching using setup-python
 
 # Run this workflow at scheduled times
-on: push
+on: workflow_dispatch
 
 # Create Environment Variables
 env:

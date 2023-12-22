@@ -39,23 +39,16 @@ jobs:
 
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
+            # Caching using setup-python
             - name: Setup Python Version ${{ matrix.python-version }}
-              uses: actions/setup-python@v4
-              id: setuppython
+              uses: actions/setup-python@v5
               with:
                 python-version: ${{ matrix.python-version }}
+                cache: 'pip'
 
-            - name: Cache Python Environment
-              uses: actions/cache@v3
-              id: cache
-              with:
-                path: ${{ env.pythonLocation }}
-                key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-run_watchdog
-
-            - name: Install Dependencies
-              if: steps.cache.outputs.cache-hit != 'true'
+            - name: Install Packages
               run: pip install -r requirements.txt
 
             - name: Run Python Script via Powershell
@@ -63,7 +56,6 @@ jobs:
               run: python watchdog.py
 
             - name: Push new changes to remote
-              shell: pwsh
               run: |
                 git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
                 git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}

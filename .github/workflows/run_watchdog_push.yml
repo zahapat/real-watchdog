@@ -47,20 +47,8 @@ jobs:
                 python-version: ${{ matrix.python-version }}
 
             # Do not remove this line: shell: bash
-            - name: Get Pip Cache Directory
-              id: get-cachedir
-              run: |
-                echo "CACHEDIR=$(pip cache dir)" >> $GITHUB_OUTPUT
-                echo "CACHEDIR: $CACHEDIR"
-              shell: bash
-            # - name: Get OS
-            #   id: get-os
-            #   run: |
-            #     echo "OS_NAME=${{ runner.os }}" >> $GITHUB_OUTPUT
-            #     echo $OS_NAME
-            #   shell: bash
-            - name: Get OS
-              id: get-os
+            - name: Set Pip Cache Directory by OS
+              id: set-cachedir-by-os
               run: |
                 OS=$(uname);
                 if [ "$OS" == "Linux" ] ; then 
@@ -76,12 +64,11 @@ jobs:
                 echo "$OS"
               shell: bash
 
-
             - name: Cache Python Packages
               id: cache-packages
               uses: actions/cache@v3
               with:
-                path: ${{ steps.get-cachedir.outputs.CACHEDIR }}
+                path: ${{ steps.set-cachedir-by-os.outputs.CACHEDIR }}
                 key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
                 restore-keys: |
                   ${{ runner.os }}-pip-
@@ -96,17 +83,17 @@ jobs:
               id: list-packages
               run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages
 
-            # - name: Run Python Script via Powershell
-            #   id: run-script
-            #   shell: pwsh
-            #   run: python watchdog.py
+            - name: Run Python Script via Powershell
+              id: run-script
+              shell: pwsh
+              run: python watchdog.py
 
-            # - name: Push New Changes to Remote
-            #   id: push-changes
-            #   shell: pwsh
-            #   run: |
-            #     git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
-            #     git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
-            #     git add database
-            #     git commit -m "[refactor]: Update database via automated action"
-            #     git push origin main
+            - name: Push New Changes to Remote
+              id: push-changes
+              shell: pwsh
+              run: |
+                git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
+                git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
+                git add database
+                git commit -m "[refactor]: Update database via automated action"
+                git push origin main

@@ -35,22 +35,16 @@ jobs:
 
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
+            # Caching using setup-python
             - name: Setup Python Version ${{ matrix.python-version }}
-              uses: actions/setup-python@v4
-              id: setuppython
+              uses: actions/setup-python@v5
               with:
                 python-version: ${{ matrix.python-version }}
+                cache: 'pip'
 
-            - uses: actions/cache@v3
-              id: cache
-              with:
-                path: ${{ env.pythonLocation }}
-                key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-run_weekly_report
-
-            - name: Install Dependencies
-              if: steps.cache.outputs.cache-hit != 'true'
+            - name: Install Packages
               run: pip install -r requirements.txt
 
             - name: Run Python Script via Powershell

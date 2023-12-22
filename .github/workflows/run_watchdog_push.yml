@@ -38,46 +38,15 @@ jobs:
         steps:
             - name: Checkout Code
               id: checkout-code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Setup Python Version ${{ matrix.python-version }}
               id: setup-python
-              uses: actions/setup-python@v4
+              uses: actions/setup-python@v5
               with:
                 python-version: ${{ matrix.python-version }}
-
-            # Do not remove this line: shell: bash
-            - name: Set Pip Cache Directory by OS
-              id: set-cachedir-by-os
-              run: |
-                OS=$(uname);
-                if [ "$OS" == "Linux" ] ; then 
-                    echo "CACHEDIR=~/.cache/pip" >> $GITHUB_OUTPUT
-                    echo "Linux"
-                elif [ "$OS" == "Darwin" ] ; then 
-                    echo "CACHEDIR=~/Library/Caches/pip" >> $GITHUB_OUTPUT
-                    echo "MacOS"
-                elif [[ "$OS" == CYGWIN* || "$OS" == MINGW* ]] ; then 
-                    echo "CACHEDIR=~\AppData\Local\pip\Cache" >> $GITHUB_OUTPUT
-                    echo "Windows"
-                fi
-                echo "$OS"
-              shell: bash
-
-            - name: Cache Python Packages
-              id: cache-packages
-              uses: actions/cache@v3
-              with:
-                path: ${{ steps.set-cachedir-by-os.outputs.CACHEDIR }}
-                key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-                restore-keys: |
-                  ${{ runner.os }}-pip-
-
-            - name: Install Packages
-              id: install-packages
-              if: ${{ steps.cache-packages.outputs.cache-hit != 'true' }}
-              continue-on-error: true
-              run: pip install -r requirements.txt
+                cache: 'pip'
+            - run: pip install -r requirements.txt
 
             - name: List All Installed Packages
               id: list-packages

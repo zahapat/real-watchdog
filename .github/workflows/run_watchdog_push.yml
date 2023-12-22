@@ -62,15 +62,18 @@ jobs:
             - name: Get OS
               id: get-os
               run: |
-                echo $(uname);
-                UNAME=$(uname);
-                if [ "$UNAME" == "Linux" ] ; then 
+                OS=$(uname);
+                if [ "$OS" == "Linux" ] ; then 
                     echo "CACHEDIR=~/.cache/pip" >> $GITHUB_OUTPUT
-                elif [ "$UNAME" == "Darwin" ] ; then 
+                    echo "Linux"
+                elif [ "$OS" == "Darwin" ] ; then 
                     echo "CACHEDIR=~/Library/Caches/pip" >> $GITHUB_OUTPUT
-                elif [[ "$UNAME" == CYGWIN* || "$UNAME" == MINGW* ]] ; then 
+                    echo "MacOS"
+                elif [[ "$OS" == CYGWIN* || "$OS" == MINGW* ]] ; then 
                     echo "CACHEDIR=~\AppData\Local\pip\Cache" >> $GITHUB_OUTPUT
+                    echo "Windows"
                 fi
+                echo "$OS"
               shell: bash
 
 

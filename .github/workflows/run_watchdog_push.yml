@@ -78,14 +78,14 @@ jobs:
             - name: Check Installed Packages
               run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages
 
-            # - name: Run Python Script via Powershell
-            #   shell: pwsh
-            #   run: python watchdog.py
+            - name: Run Python Script via Powershell
+              shell: pwsh
+              run: python watchdog.py
 
-            # - name: Push New Changes to Remote
-            #   run: |
-            #     git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
-            #     git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
-            #     git add database
-            #     git commit -m "[refactor]: Update database via automated action"
-            #     git push origin main
+            - name: Push New Changes to Remote
+              run: |
+                git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
+                git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
+                git add database
+                git commit -m "[refactor]: Update database via automated action"
+                git push origin main

@@ -50,6 +50,8 @@ jobs:
               with:
                 path: ${{ env.pythonLocation }}
                 key: ${{ runner.os }}-pip-${{ env.pythonLocation }}-${{ hashFiles('**/requirements.txt') }}
+                restore-keys: |
+                  ${{ runner.os }}-pip-${{ env.pythonLocation }}-
 
             - name: Install Packages
               if: steps.cache-env.outputs.cache-hit != 'true'
@@ -58,14 +60,14 @@ jobs:
             - name: Check Installed Packages
               run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages
 
-            # - name: Run Python Script via Powershell
-            #   shell: pwsh
-            #   run: python watchdog.py
+            - name: Run Python Script via Powershell
+              shell: pwsh
+              run: python watchdog.py
 
-            # - name: Push new changes to remote
-            #   run: |
-            #     git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
-            #     git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
-            #     git add database
-            #     git commit -m "[refactor]: Update database via automated action"
-            #     git push origin main
+            - name: Push new changes to remote
+              run: |
+                git config --global user.name ${{ secrets.AUTHOR_NAME_SURNAME }}
+                git config --global user.email ${{ secrets.AUTHOR_EMAIL_ADDRESS }}
+                git add database
+                git commit -m "[refactor]: Update database via automated action"
+                git push origin main

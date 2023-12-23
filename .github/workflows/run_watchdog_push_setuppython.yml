@@ -47,7 +47,9 @@ jobs:
                 cache: 'pip'
 
             - name: Install Packages
-              run: pip install -r requirements.txt
+              # run: pip install -r requirements.txt
+              run: |
+                pip install --force-reinstall -r requirements.txt --only-binary :all:
 
             - name: List All Installed Packages
               run: pip list packages

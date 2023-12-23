@@ -335,6 +335,7 @@ def get_details(url, advertised_property_details, new_target_properties_details_
 # Function to search for the pattern in a web page
 def search_in_page(url, all_target_properties_details, new_target_properties_details_queue, process_id):
     global advertisements_done
+    visited_locked = False
     try:
         # A set to keep track of visited URLs to avoid infinite loops
         advertised_property_details = [
@@ -389,6 +390,7 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
                                             # Mark as Active and set visited flag to True
                                             print(f"PY: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}")
                                             visited = True
+                                            visited_locked = True
                                             break
 
                                     if visited == True: 
@@ -402,10 +404,9 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
                                         process_id)
 
         # Returns 1 if on the last page, else 0 to proceed to the next page
-        if advertisements == 0: 
+        if advertisements == 0 or visited_locked == True:
             advertisements_done[process_id] = 1
             return 1
-        advertisements_done[process_id] = 0
         return 0
 
     except ValueError as e:
@@ -415,6 +416,7 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
 
 async def search_in_page_async(url, all_target_properties_details, new_target_properties_details_queue, process_id, client):
     global advertisements_done
+    visited_locked = False
     try:
         # A set to keep track of visited URLs to avoid infinite loops
         advertised_property_details = [
@@ -470,6 +472,7 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
                                             # Mark as Active and set visited flag to True
                                             print(f"PY: Process {process_id}: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}")
                                             visited = True
+                                            visited_locked = True
                                             break
 
                                     if visited == True: 
@@ -483,10 +486,9 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
                                         process_id)
 
         # Returns 1 if on the last page, else 0 to proceed to the next page
-        if advertisements == 0: 
+        if advertisements == 0 or visited_locked == True:
             advertisements_done[process_id] = 1
             return 1
-        advertisements_done[process_id] = 0
         return 0
 
     except ValueError as e:
@@ -762,7 +764,7 @@ def find_new_and_update_all_properties_from_websites(
         print(f"PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} done. Timer: {current_time}")
 
         if advertisements_done[process_id] == 1:
-            print(f"PY: Process {process_id}: Reached the last page. Break.")
+            print(f"PY: Process {process_id}: Reached the last page or a previously visited item. Break.")
             break
         elif current_time > max_timer_break:
             print(f"PY: Process {process_id}: Maximum timer value reached. Break.")
@@ -837,7 +839,7 @@ async def find_new_and_update_all_properties_from_websites_async(
         print(f"PY: Process {process_id}: Searching on pages {min_scan_pages}-{max_scan_pages} done. Timer: {current_time}")
 
         if advertisements_done[process_id] == 1:
-            print(f"PY: Process {process_id}: Reached the last page. Break.")
+            print(f"PY: Process {process_id}: Reached the last page or a previously visited item. Break.")
             break
         elif current_time > max_timer_break:
             print(f"PY: Process {process_id}: Maximum timer value reached. Break.")

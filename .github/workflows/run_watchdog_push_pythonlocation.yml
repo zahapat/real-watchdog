@@ -36,22 +36,22 @@ jobs:
 
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
 
             - name: Setup Python Version ${{ matrix.python-version }}
-              uses: actions/setup-python@v1
+              uses: actions/setup-python@v5
               with:
                 python-version: ${{ matrix.python-version }}
 
             # Caching using pythonlocation
             - name: Cache Python Packages
-              uses: actions/cache@v2
+              uses: actions/cache@v3
               id: cache-packages
               with:
-                path: ${{ env.pythonLocation }}
-                key: ${{ runner.os }}-pip-${{ env.pythonLocation }}-${{ hashFiles('**/requirements.txt') }}
+                 path: ${{ env.pythonLocation}}/lib/python${{ matrix.python-version }}/site-packages/*
+                key: pythonlocation-${{ runner.os }}-python-${{ matrix.python-version }}-pip-${{ env.pythonLocation }}-${{ hashFiles('**/requirements.txt') }}
                 restore-keys: |
-                  ${{ runner.os }}-pip-${{ env.pythonLocation }}-
+                  pythonlocation-${{ runner.os }}-python-${{ matrix.python-version }}-pip-
 
             - name: Install Packages
               if: steps.cache-env.outputs.cache-hit != 'true'

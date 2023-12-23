@@ -45,11 +45,12 @@ jobs:
               with:
                 python-version: ${{ matrix.python-version }}
                 cache: 'pip'
+                cache-dependency-path: './requirements.txt'
 
             - name: Install Packages
               # run: pip install -r requirements.txt
               run: |
-                pip install -r requirements.txt --only-binary :all:
+                pip install -r ./requirements.txt --only-binary :all:
 
             - name: List All Installed Packages
               run: pip list packages

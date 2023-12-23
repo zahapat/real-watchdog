@@ -49,7 +49,8 @@ jobs:
                 cache: 'pip'
 
             - name: Install Packages
-              run: pip install -r requirements.txt
+              run: |
+                pip install -r requirements.txt --only-binary :all:
 
             - name: Run Python Script via Powershell
               shell: pwsh

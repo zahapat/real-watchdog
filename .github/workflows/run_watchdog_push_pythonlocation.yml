@@ -54,7 +54,7 @@ jobs:
             - name: Install Packages
               if: steps.cache-env.outputs.cache-hit != 'true'
               run: pip install -r requirements.txt
-                   python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
+                   pip show polars
             
             - name: Check Installed Packages
               run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages
@@ -63,7 +63,8 @@ jobs:
               shell: pwsh
               run: python watchdog.py
 
-            - run: python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
+            - name: Show polars
+              run: pip show polars | grep Location
 
             # - name: Push new changes to remote
             #   run: |

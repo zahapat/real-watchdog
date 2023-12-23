@@ -48,14 +48,12 @@ jobs:
               uses: actions/cache@v3
               id: cache-packages
               with:
-                path: ${{ env.pythonLocation }}\lib\python${{ matrix.python-version }}\site-packages\*
+                path: ${{ env.pythonLocation }}\Lib\site-packages\*
                 key: ${{ env.pythonLocation }}-${{ runner.os }}-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
 
             - name: Install Packages
               if: steps.cache-env.outputs.cache-hit != 'true'
-              run: |
-                   pip install -r requirements.txt
-                   pip show polars
+              run: pip install -r requirements.txt
             
             - name: Check Installed Packages
               run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages

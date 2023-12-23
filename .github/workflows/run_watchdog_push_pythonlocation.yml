@@ -48,12 +48,14 @@ jobs:
               uses: actions/cache@v3
               id: cache-packages
               with:
-                path: ${{ env.pythonLocation }}\x64\lib\python${{ matrix.python-version }}\site-packages\*
+                path: ${{ env.pythonLocation }}\lib\python${{ matrix.python-version }}\site-packages\*
                 key: ${{ env.pythonLocation }}-${{ runner.os }}-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
+              run: python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
 
             - name: Install Packages
               if: steps.cache-env.outputs.cache-hit != 'true'
               run: pip install -r requirements.txt
+                   python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
             
             - name: Check Installed Packages
               run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages
@@ -61,6 +63,8 @@ jobs:
             - name: Run Python Script via Powershell
               shell: pwsh
               run: python watchdog.py
+
+            - run: python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
 
             # - name: Push new changes to remote
             #   run: |

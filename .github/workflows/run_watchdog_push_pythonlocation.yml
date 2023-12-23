@@ -56,14 +56,11 @@ jobs:
               run: pip install -r requirements.txt
             
             - name: Check Installed Packages
-              run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages
+              run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages; pip show polars
 
             - name: Run Python Script via Powershell
               shell: pwsh
               run: python watchdog.py
-
-            - name: Show polars
-              run: pip show polars | grep Location
 
             # - name: Push new changes to remote
             #   run: |

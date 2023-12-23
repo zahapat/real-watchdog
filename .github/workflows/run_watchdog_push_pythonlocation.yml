@@ -52,7 +52,7 @@ jobs:
                 key: ${{ env.pythonLocation }}-${{ runner.os }}-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
 
             - name: Install Packages
-              if: steps.cache-env.outputs.cache-hit != 'true'
+              if: steps.cache-packages.outputs.cache-hit != 'true'
               run: pip install -r requirements.txt
             
             - name: Check Installed Packages

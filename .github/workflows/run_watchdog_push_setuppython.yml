@@ -49,7 +49,7 @@ jobs:
             - name: Install Packages
               # run: pip install -r requirements.txt
               run: |
-                pip install --no-compile --force-reinstall -r requirements.txt --only-binary :all:
+                pip install -r requirements.txt --only-binary :all:
 
             - name: List All Installed Packages
               run: pip list packages

@@ -654,6 +654,7 @@ def write_content_to_output_files(file_prefix, all_target_properties_details, di
             file=file_gen_fullpath, 
             include_header=True,
             separator=',',
+            line_terminator="\r\n" #CRLF Termination
         )
 
     # Reset the list content to empty list of lists and free memory

@@ -49,11 +49,12 @@ jobs:
               id: cache-packages
               with:
                 path: ${{ env.pythonLocation }}\Lib\site-packages\*
-                key: ${{ env.pythonLocation }}-${{ runner.os }}-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
+                key: ${{ env.pythonLocation }}-${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
             - name: Install Packages
               if: steps.cache-packages.outputs.cache-hit != 'true'
-              run: pip install -r requirements.txt
+              run: |
+                pip install -r ./requirements.txt --only-binary :all:
             
             - name: Check Installed Packages
               run: echo "Cache Hit - ${{ steps.cache-packages.outputs.cache-hit }}"; pip list packages; pip show polars

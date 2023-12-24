@@ -56,7 +56,6 @@ jobs:
               uses: actions/cache@v3
               id: cache-packages
               with:
-                # path: ${{ env.pythonLocation }}\Lib\site-packages\*
                 path: ${{ steps.set-cachedir-by-os.outputs.CACHEDIR }}
                 key: ${{ env.pythonLocation }}-${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 

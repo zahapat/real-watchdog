@@ -51,7 +51,6 @@ jobs:
               run: |
                 PATH=$(python -c "import sysconfig; print(sysconfig.get_path('purelib'))");
                 echo "CACHEDIR=$PATH" >> $GITHUB_OUTPUT
-                echo "$PATH"
               shell: bash # Do not touch
 
             # Caching using pythonlocation

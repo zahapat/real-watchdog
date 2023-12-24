@@ -37,15 +37,30 @@ jobs:
             - name: Checkout Code
               uses: actions/checkout@v4
 
-            # Caching using setup-python
             - name: Setup Python Version ${{ matrix.python-version }}
               uses: actions/setup-python@v5
               with:
                 python-version: ${{ matrix.python-version }}
-                cache: 'pip'
+
+            - name: Set Cache Directory by OS
+              id: set-cachedir-by-os
+              run: |
+                PATH=$(python -c "import sysconfig; print(sysconfig.get_path('purelib'))");
+                echo "CACHEDIR=$PATH" >> $GITHUB_OUTPUT
+              shell: bash # Do not touch
+
+            # Caching using pythonlocation
+            - name: Cache Python Packages
+              uses: actions/cache@v3
+              id: cache-packages
+              with:
+                path: ${{ steps.set-cachedir-by-os.outputs.CACHEDIR }}
+                key: ${{ env.pythonLocation }}-${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
 
             - name: Install Packages
-              run: pip install -r requirements.txt
+              if: steps.cache-packages.outputs.cache-hit != 'true'
+              run: |
+                pip install -r ./requirements.txt --only-binary :all:
 
             - name: Run Python Script via Powershell
               shell: pwsh

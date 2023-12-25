@@ -359,10 +359,16 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
             advertisements = 0
             for div in soup.find_all("div", {"class": "inzeraty inzeratyflex"}):
                 advertisements = advertisements + 1
+                topped = False
                 for line in div:
                     line = str(line)
                     if line.startswith("<div class=\"inzeratynadpis\">"):
                         advertised_property_details[3] = line.replace("<div class=\"inzeratynadpis\"><a href=\"", "").split("\">",1)[0]
+                        try:
+                            line.split('class=\"ztop\"', maxsplit=1)[1]
+                            topped = True
+                        except IndexError as e:
+                            pass
 
                     elif line.startswith("<div class=\"inzeratycena\">"):
                         advertised_property_details[4] = line.replace("<div class=\"inzeratycena\"><b>", "").replace("</b></div>", "").replace("Kč", "").replace(" ", "")
@@ -390,7 +396,10 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
                                             # Mark as Active and set visited flag to True
                                             print(f"PY: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}")
                                             visited = True
-                                            visited_locked = True
+                                            if not topped:
+                                                visited_locked = True
+                                            else:
+                                                print("Skip topped")
                                             break
 
                                     if visited == True: 
@@ -441,10 +450,17 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
             advertisements = 0
             for div in soup.find_all("div", {"class": "inzeraty inzeratyflex"}):
                 advertisements = advertisements + 1
+                topped = False
                 for line in div:
                     line = str(line)
                     if line.startswith("<div class=\"inzeratynadpis\">"):
                         advertised_property_details[3] = line.replace("<div class=\"inzeratynadpis\"><a href=\"", "").split("\">",1)[0]
+                        advertised_property_details[3] = line.replace("<div class=\"inzeratynadpis\"><a href=\"", "").split("\">",1)[0]
+                        try:
+                            topped = line.split('class=\"ztop\"', maxsplit=1)[1]
+                            topped = True
+                        except IndexError as e:
+                            pass
 
                     elif line.startswith("<div class=\"inzeratycena\">"):
                         advertised_property_details[4] = line.replace("<div class=\"inzeratycena\"><b>", "").replace("</b></div>", "").replace("Kč", "").replace(" ", "")
@@ -472,7 +488,10 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
                                             # Mark as Active and set visited flag to True
                                             print(f"PY: Process {process_id}: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}")
                                             visited = True
-                                            visited_locked = True
+                                            if not topped:
+                                                visited_locked = True
+                                            else:
+                                                print("Skip topped")
                                             break
 
                                     if visited == True: 

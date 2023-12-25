@@ -394,12 +394,10 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
                                             and advertised_property_details[3] in mask_char_values_in_string(all_target_properties_detail[3], -mask):
 
                                             # Mark as Active and set visited flag to True
-                                            print(f"PY: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}")
+                                            print(f"PY: Process {process_id}: Skip: {mask_char_values_in_string(all_target_properties_detail[3], -mask)}")
                                             visited = True
                                             if not topped:
                                                 visited_locked = True
-                                            else:
-                                                print("Skip topped")
                                             break
 
                                     if visited == True: 
@@ -490,8 +488,6 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
                                             visited = True
                                             if not topped:
                                                 visited_locked = True
-                                            else:
-                                                print("Skip topped")
                                             break
 
                                     if visited == True: 

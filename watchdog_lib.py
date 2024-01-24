@@ -588,6 +588,7 @@ async def check_if_active_property_thread_async(all_target_property_detail, all_
 
 def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask):
     # global all_target_properties_details
+    skip_after_inactive_for_days = 30
     print(f"PY: Checking for active URLs...")
     threads_all_target_properties_details = [[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_len =[[] for i in range(len(all_target_properties_details))]
@@ -598,7 +599,7 @@ def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask
     for i, all_target_properties_detail in enumerate(all_target_properties_details):
         for pos, all_target_property_detail in enumerate(all_target_properties_detail):
             # Skip whether or not the item is active if it has been inactive for two days, otherwise check newer/active ones
-            if datetime.strptime(all_target_property_detail[2], "%d.%m.%Y") >= (datetime.today() - timedelta(days=2)):
+            if datetime.strptime(all_target_property_detail[2], "%d.%m.%Y") >= (datetime.today() - timedelta(days=skip_after_inactive_for_days)):
                 threads_all_target_properties_details_indices[i].append(pos)
                 threads_all_target_properties_details_queue[i].append(Queue())
                 threads_all_target_properties_details[i].append(Thread(
@@ -625,6 +626,7 @@ def check_for_active_urls_threaded(all_target_properties_details, this_mask=mask
 
 async def check_for_active_urls_threaded_async(all_target_properties_details, this_mask=mask):
     # global all_target_properties_details
+    skip_after_inactive_for_days = 30
     print(f"PY: Checking for active URLs...")
     threads_all_target_properties_details_queue = [[] for i in range(len(all_target_properties_details))]
     threads_all_target_properties_details_indices = [[] for i in range(len(all_target_properties_details))]
@@ -632,8 +634,8 @@ async def check_for_active_urls_threaded_async(all_target_properties_details, th
 
     for i, all_target_properties_detail in enumerate(all_target_properties_details):
         for position_in_database, all_target_property_detail in enumerate(all_target_properties_detail):
-            # Skip whether or not the item is active if it has been inactive for two days, otherwise check newer/active ones
-            if datetime.strptime(all_target_property_detail[2], "%d.%m.%Y") >= (datetime.today() - timedelta(days=2)):
+            # Skip whether or not the item is active if it has been inactive for 30 days, otherwise check newer/active ones
+            if datetime.strptime(all_target_property_detail[2], "%d.%m.%Y") >= (datetime.today() - timedelta(days=skip_after_inactive_for_days)):
                 threads_all_target_properties_details_indices[i].append(position_in_database)
                 threads_all_target_properties_details_queue[i].append(Queue())
 

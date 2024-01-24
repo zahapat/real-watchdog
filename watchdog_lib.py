@@ -1,5 +1,7 @@
 # from pandas import DataFrame, read_csv
 from polars import DataFrame, Utf8, read_csv, col
+# import dask.dataframe as dd
+# import datatable
 from requests import get as requests_get
 from platform import processor, machine, architecture, python_version_tuple
 from asyncio import run, gather
@@ -77,6 +79,16 @@ search_details = [
     "balk",
     "plastová okna"
 ]
+
+column_names = ['Active', 
+            'Date Added', 
+            'Last Active', 
+            'URL', 
+            'Price', 
+            'ZIP', 
+            'City', 
+            'Disposition', 
+            'Details']
 
 # Get information about CPU
 def get_cpu_info():
@@ -239,6 +251,7 @@ def create_file(output_directory, file_name, directory="database"):
 
 # Function to get already searched urls from files in the current file directory
 def get_data_from_file(file_name, directory="database"):
+    global column_names
     try:
         print(f"PY: Getting data from CSV files...")
         target_properties_details = [] # Try not global this time
@@ -246,28 +259,30 @@ def get_data_from_file(file_name, directory="database"):
         create_dir_if_noexist(f"{output_directory}\\{directory}")
         file_gen_fullpath = f"{output_directory}\\{directory}\\{file_name}"
 
+        # Read data from csv file
+        target_properties_details = read_csv(
+            source=file_gen_fullpath, 
+            has_header=True,
+            columns=column_names, 
+            encoding="utf-8-sig",
+            separator=',',
+            dtypes={
+                'Active': Utf8,
+                'Date Added': Utf8,
+                'Last Active': Utf8,
+                'URL': Utf8,
+                'Price': Utf8,
+                'ZIP': Utf8,
+                'City': Utf8,
+                'Disposition': Utf8,
+                'Details': Utf8
+            }).with_columns(col(["Active"]).str.replace_all('A', 'X',))
+
+        # Note: transpose() must be on a separate line otherwise you can expect unexpected behaviour if appended in-line
+        target_properties_details = target_properties_details.transpose()
         target_properties_details = list(
-            map(lambda set : set.to_list(), read_csv(
-                source=file_gen_fullpath, 
-                has_header=True,
-                columns=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Details'], 
-                encoding="utf-8-sig",
-                separator=',',
-                dtypes={
-                    'Active': Utf8,
-                    'Date Added': Utf8,
-                    'Last Active': Utf8,
-                    'URL': Utf8,
-                    'Price': Utf8,
-                    'ZIP': Utf8,
-                    'City': Utf8,
-                    'Disposition': Utf8,
-                    'Details': Utf8
-                })
-                .with_columns(col(["Active"]).str.replace_all('A', 'X',))
-                .transpose()
-                .get_columns()
-        ))
+            map(lambda set : set.to_list(), target_properties_details))
+        
 
     except Exception as e:
         print(f"PY: ErrorHandler: Detected Error: {e}. Creating a file")
@@ -398,6 +413,8 @@ def search_in_page(url, all_target_properties_details, new_target_properties_det
                                             visited = True
                                             if not topped:
                                                 visited_locked = True
+                                            else:
+                                                print(f"IGNORE ACTIVE TOPPED: {website_url_root+advertised_property_details[3]}")
                                             break
 
                                     if visited == True: 
@@ -488,6 +505,8 @@ async def search_in_page_async(url, all_target_properties_details, new_target_pr
                                             visited = True
                                             if not topped:
                                                 visited_locked = True
+                                            else:
+                                                print(f"IGNORE ACTIVE TOPPED: {website_url_root+advertised_property_details[3]}")
                                             break
 
                                     if visited == True: 
@@ -656,6 +675,7 @@ def sort_list_by_date(all_target_properties_details):
 # Write the content to the respective output files
 def write_content_to_output_files(file_prefix, all_target_properties_details, directory="database"):
     print(f"PY: Writing data to CSV files...")
+    global column_names
 
     # Using len() and indices is 15 seconds faster than for _ in _ method in the first for loop
     search_dispositions_list_len = len(search_dispositions_list)
@@ -665,9 +685,17 @@ def write_content_to_output_files(file_prefix, all_target_properties_details, di
         create_dir_if_noexist(f"{output_directory}\\{directory}")
         file_gen_fullpath = f"{output_directory}\\{directory}\\{file_gen_name}"
 
-        DataFrame(all_target_properties_details[i],
-                     schema=['Active', 'Date Added', 'Last Active' , 'URL', 'Price', 'ZIP', 'City', 'Disposition', 'Details']
-                     ).write_csv(
+        # Convert list to polars dataframe for export
+        df_to_output_file = DataFrame(all_target_properties_details[i], schema=column_names)
+
+        # Transposition resets column names (schema), so rename them back
+        # Note: if transpose problem persists, consider creating a separate condition for transposition if csv refuses to export file correctly
+        # df_to_output_file = df_to_output_file.transpose()
+        # for u, column_name in enumerate(column_names):
+        #     df_to_output_file = df_to_output_file.rename({f"column_{u}": f"{column_name}"})
+
+        # Export to csv
+        df_to_output_file.write_csv(
             file=file_gen_fullpath, 
             include_header=True,
             separator=',',
@@ -755,7 +783,7 @@ def find_new_and_update_all_properties_from_websites(
     # Main loop for properties search
     timer_start = time()
     max_timer_break = 60
-    max_scan_pages_break = 30
+    max_scan_pages_break = 800
     while advertisements_done[int(process_id)] == 0:
 
         # Start threads
@@ -831,7 +859,7 @@ async def find_new_and_update_all_properties_from_websites_async(
     # Main loop for properties search
     timer_start = time()
     max_timer_break = 60
-    max_scan_pages_break = 30
+    max_scan_pages_break = 800
     while advertisements_done[int(process_id)] == 0:
 
         # Start async threads

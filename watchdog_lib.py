@@ -1,7 +1,4 @@
-# from pandas import DataFrame, read_csv
 from polars import DataFrame, Utf8, read_csv, col
-# import dask.dataframe as dd
-# import datatable
 from requests import get as requests_get
 from platform import processor, machine, architecture, python_version_tuple
 from asyncio import run, gather
@@ -292,7 +289,7 @@ def get_data_from_file(file_name, directory="database"):
     return target_properties_details
 
 
-# Function to search for the pattern in a web page
+# Function to search for a pattern in a web page
 def get_details(url, advertised_property_details, new_target_properties_details_queue, process_id):
 
     try:
